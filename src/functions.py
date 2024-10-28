@@ -2,46 +2,68 @@ from utils import token_map
 
 def read_java_file(filename):
     with open(filename, 'r') as file:
-        current_line = 0
-        current_row = 0
         output = ""
-        #iterando sob linha e coluna no arquivo de texto
-        current_word = ""
+
         for line in file:
-            current_line += 1
             current_row = 0
-            print(len(line))
+            current_word = ""
+            #iterando sob linha e coluna no arquivo de texto
             while current_row < len(line):
                 ch = line[current_row]
-                current_word += ch
-                if identify_loop(ch):
+
+                if ch.isspace():  # Ignora espaços em branco
+                    if current_word:
+                        process_token(current_word, output)
+                        current_word = ""
                     current_row += 1
-                    ch = line[current_row]
-                    while ch.isalnum():
-                        current_word += ch
-                        current_row += 1
-                        ch = line[current_row]
-                        
-                    print(current_word)
-                        
+                    continue
+
+                if ch.isalnum() or ch == '.':  # Permite letras, números e pontos
+                    current_word += ch
+                elif ch == '"': 
+                    if current_word:  
+                        process_token(current_word, output)
+                        current_word = ""
                     
-                        
+                    current_word += ch
+                    current_row += 1
+                    while current_row < len(line) and line[current_row] != '"':
+                        current_word += line[current_row]
+                        current_row += 1
+                    current_word += '"'
+                    process_token(current_word, output)
+                    current_word = ""
+                else:
+                    if current_word: # Processa a palavra antes de um símbolo
+                        process_token(current_word, output)
+                        current_word = ""
+                    # Processa o símbolo individual
+                    process_token(ch, output)
 
+                current_row += 1
 
-                
+            # Processa a última palavra na linha, se existir
+            if current_word:
+                process_token(current_word, output)
 
-                
+        write_output_file("output.txt", output)
 
-
-
+def process_token(word, output):
+    # Verifica se a palavra está no token_map
+    if word in token_map:
+        token = token_map[word]
+        print(f"{token}: '{word}'")
+        output += f"{token}: '{word}'\n"
+    elif word.isidentifier():  # Se não for um token
+        print(f"IDEN: '{word}'")
+        output += f"IDEN: '{word}'\n"
+    elif word.startswith('"') and word.endswith('"'):  # Se for uma string
+        print(f"STR: {word}")  # Adiciona token de string
+        output += f"STR: {word}\n"
 
 def write_output_file(filename, content):
-    with open (filename, 'w') as file:
+    with open(filename, 'w') as file:
         file.write(content)
 
 def identify_loop(ch):
-    if ch.isnumeric():
-        return False
-    
-    return True
-        
+    return not ch.isnumeric()
