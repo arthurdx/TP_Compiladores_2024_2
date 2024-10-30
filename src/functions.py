@@ -11,15 +11,13 @@ def read_java_file(filename):
             while current_row < len(line):
                 ch = line[current_row]
 
-                if ch.isspace():  # Ignora espaços em branco
-                    if current_word:
-                        process_token(current_word, output)
-                        current_word = ""
-                    current_row += 1
-                    continue
-
-                if ch.isalnum() or ch == '.':  # Permite letras, números e pontos
+                if ch.isalpha():  # Permite letras, números e pontos
                     current_word += ch
+                elif ch.isnumeric():
+                    if current_word:
+                        current_word+=ch
+                    else:
+                        pass
                 elif ch == '"': 
                     if current_word:  
                         process_token(current_word, output)
@@ -54,11 +52,12 @@ def process_token(word, output):
         token = token_map[word]
         print(f"{token}: '{word}'")
         output += f"{token}: '{word}'\n"
-    elif word.isidentifier():  # Se não for um token
+    # Se não for um token
+    elif word.isidentifier():  
         print(f"IDEN: '{word}'")
         output += f"IDEN: '{word}'\n"
-    elif word.startswith('"') and word.endswith('"'):  # Se for uma string
-        print(f"STR: {word}")  # Adiciona token de string
+    elif word.startswith('"') and word.endswith('"'):
+        print(f"STR: {word}") 
         output += f"STR: {word}\n"
 
 def write_output_file(filename, content):

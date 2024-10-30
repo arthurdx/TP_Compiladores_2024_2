@@ -3,7 +3,7 @@ int soma(int a, int b){
 }
 
 int main(){
-    int a = 2;
+    int a2 = 2;
     int b = 3;
     int c = soma(a,b);
     system.out.print("resultado: int", c);

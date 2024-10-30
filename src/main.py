@@ -2,7 +2,6 @@ from functions import *
 import sys
 
 def main():
-    print(len(sys.argv))
     if len(sys.argv) < 2:
         print("Passe o caminho do arquivo txt como argumento no terminal" + 
         "\nexemplo: python3 src/main.py <txt/arquivo.txt>")
