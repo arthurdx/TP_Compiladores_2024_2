@@ -1,0 +1,11 @@
+int soma(int a, int b){
+    return a + b
+}
+
+int main(){
+    int a = 2;
+    int b = 3;
+    int c = soma(a,b);
+    system.out.print("resultado: int", c);
+}
+==
