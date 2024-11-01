@@ -47,9 +47,11 @@ def read_java_file(filename):
         write_output_file("output.txt", output)
 
 def process_token(word, output):
-    token = identify_number(word) if word not in token_map else list(token_map[word].keys())[0]
-    
-    if token:
+    if word in token_map:
+        token=token_map[word]
+        
+    #token = identify_number(word) if word not in token_map else list(token_map[word].keys())[0]
+    #if token:
         print(f"{token}: '{word}'")
         output += f"{token}: '{word}'\n"
     elif word in token_map:
