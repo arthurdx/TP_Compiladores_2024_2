@@ -6,6 +6,7 @@ int main(){
     int a = 2;
     int b = 3;
     int c = soma(a,b);
+    float d = 4.32;
     system.out.print("resultado: int", c);
 }
 ==

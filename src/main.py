@@ -7,8 +7,9 @@ def main():
         "\nexemplo: python3 src/main.py <txt/arquivo.txt>")
         return
     filename = sys.argv[1]
-    read_java_file(filename)
-
+    output = read_java_file(filename)
+    print(output)
+    
 if __name__ == '__main__':
     main()
     

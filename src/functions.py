@@ -2,8 +2,8 @@ from utils import token_map  # Importa o mapa de tokens
 
 def read_java_file(filename):
     with open(filename, 'r') as file:
-        output = ""
-        
+        output = []
+        current_line = 0
         for line in file:
             current_row = 0
             current_word = ""
@@ -19,7 +19,7 @@ def read_java_file(filename):
                     current_word += ch
                 elif ch == '"':  
                     if current_word:
-                        process_token(current_word, output)
+                        process_token(current_word, output, current_line, current_row)
                         current_word = ""
                     current_word += ch
                     current_row += 1
@@ -27,41 +27,50 @@ def read_java_file(filename):
                         current_word += line[current_row]
                         current_row += 1
                     current_word += '"'
-                    process_token(current_word, output)
+                    process_token(current_word, output, current_line, current_row)
                     current_word = ""
                 else:
                     if current_word:  
-                        process_token(current_word, output)
+                        process_token(current_word, output, current_line, current_row)
                         current_word = ""
 
                     symbol_token = identify_symbol(line, current_row)
                     if symbol_token:
-                        process_token(symbol_token, output)
+                        process_token(symbol_token, output, current_line, current_row)
                         current_row += len(symbol_token) - 1  
 
                 current_row += 1
 
+            current_line += 1
             if current_word:
-                process_token(current_word, output)
+                process_token(current_word, output, current_line, current_row)
+            
+            
+        
+        return output
 
-        write_output_file("output.txt", output)
+        #write_output_file("output.txt", output)
 
-def process_token(word, output, linha,coluna):
+def process_token(word, output, current_line ,current_row):
     token = identify_number(word) if word not in token_map else list(token_map[word].values())[0]
     
     if token:
         print(f"{token}: '{word}'")
-        output += f"{token}: '{word}'\n"
+        output_line = (token, word, current_line, current_row - len(word))
+        output.append(output_line)
     elif word in token_map:
         token = list(token_map[word].keys())[0]
         print(f"{token}: '{word}'")
-        output += f"{token}: '{word}'\n"
+        output_line = (token, word, current_line, current_row - len(word))
+        output.append(output_line)
     elif word.isidentifier():
         print(f"IDEN: '{word}'")
-        output += f"IDEN: '{word}'\n"
+        output_line = ('IDEN', word, current_line, current_row - len(word))
+        output.append(output_line)
     elif word.startswith('"') and word.endswith('"'):
         print(f"STR: {word}") 
-        output += f"STR: {word}\n"
+        output_line = ('STR', word, current_line, current_row - len(word))
+        output.append(output_line)
 
 def identify_number(word):
     if word[0] in '123456789' and word.isdigit():
