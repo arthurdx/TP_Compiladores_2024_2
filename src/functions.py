@@ -10,7 +10,6 @@ def read_java_file(filename):
                 line.replace('\n', '\\n')
             current_row = 0
             current_word = ""
-            negative_sign = False
 
             if not reading_comment:
                 while current_row < len(line):
@@ -24,13 +23,13 @@ def read_java_file(filename):
                         reading_comment = True
                         break
 
-                    if ch.isalpha(): 
+                    if ch.isalpha():
                         current_word += ch
-                    elif ch.isdigit() or (ch == '.' and current_word and current_word[-1].isdigit()):  
+                    elif ch.isdigit() or (ch == '.' and current_word and current_word[-1].isdigit()):
                         current_word += ch
-                    elif ch == 'x' and current_word == '0': 
+                    elif ch == 'x' and current_word == '0':
                         current_word += ch
-                    elif ch == '"':  
+                    elif ch == '"':
                         if current_word:
                             process_token(current_word, output, current_line, current_row)
                             current_word = ""
@@ -46,7 +45,7 @@ def read_java_file(filename):
                         break
                     elif ch == '-':
                         if current_row + 1 < len(line) and (line[current_row + 1].isdigit() or line[current_row + 1] == '.'):
-                            negative_sign = True
+                            current_word += ch
                         else:
                             if current_word:
                                 process_token(current_word, output, current_line, current_row)
@@ -55,17 +54,15 @@ def read_java_file(filename):
                             if symbol_token:
                                 process_token(symbol_token, output, current_line, current_row)
                                 current_row += len(symbol_token) - 1
-
-
                     else:
-                        if current_word:  
+                        if current_word:
                             process_token(current_word, output, current_line, current_row)
                             current_word = ""
 
                         symbol_token = identify_symbol(line, current_row)
                         if symbol_token:
                             process_token(symbol_token, output, current_line, current_row)
-                            current_row += len(symbol_token) - 1  
+                            current_row += len(symbol_token) - 1
 
                     current_row += 1
 
@@ -74,20 +71,17 @@ def read_java_file(filename):
                     process_token(current_word, output, current_line, current_row)
             else:
                 while '*/' not in line:
-                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}' 
+                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
                     current_line += 1
                     break
                 else:
-                    reading_comment = False   
-            
-        
+                    reading_comment = False
+
         return output
 
-        #write_output_file("output.txt", output)
-
-def process_token(word, output, current_line ,current_row):
+def process_token(word, output, current_line, current_row):
     token, error_message = identify_number(word) if word not in token_map else (list(token_map[word].values())[0], None)
-    
+
     if error_message:
         print(error_message)
     elif token:
@@ -107,7 +101,7 @@ def process_token(word, output, current_line ,current_row):
         output.append(output_line)
     elif word.startswith('"'):
         if word.endswith('"'):
-            print(f"STR: {word}") 
+            print(f"STR: {word}")
             output_line = ('STR', word, current_line, current_row - len(word))
             output.append(output_line)
         else:
@@ -116,38 +110,37 @@ def process_token(word, output, current_line ,current_row):
 def identify_number(word):
     errors = []
 
-    if '..' in word:
+    is_negative = word.startswith('-')
+
+    if is_negative:
+        number_part = word[1:]
+    else:
+        number_part = word
+
+    if '..' in number_part:
         errors.append(f"Erro: número '{word}' não pode conter dois ou mais pontos consecutivos.")
 
-    if word.count('.') > 1:
+    if number_part.count('.') > 1:
         errors.append(f"Erro: número '{word}' não pode ter mais de um ponto.")
 
-    if word.endswith('.') and len(word) > 1:
+    if number_part.endswith('.') and len(number_part) > 1:
         errors.append(f"Erro: número '{word}' não pode terminar com um ponto sem dígitos.")
 
     if errors:
         return None, " | ".join(errors)
 
-    if word[0] == '-':
-        number_part = word[1:] 
-    else:
-        number_part = word
-        
-    if word[0] in '123456789' and word.isdigit():
+    if number_part.isdigit():
         return 'INT', None
-    
-    elif word.startswith('0') and all('0' <= ch <= '7' for ch in word[1:]):
+    elif number_part.startswith('0') and all('0' <= ch <= '7' for ch in number_part[1:]):
         return 'OCT', None
-    
-    elif word.startswith(('0x')) and all(ch.isdigit() or 'A' <= ch <= 'F' for ch in word[2:]):
-        return 'HEX', None
-    
-    elif '.' in word:
-        before_point, after_point = word.split('.', 1)
+    elif number_part.startswith(('0x')) and all(ch.isdigit() or 'A' <= ch <= 'F' for ch in number_part[2:]):
+        return 'HEX', None 
+    elif '.' in number_part:
+        before_point, after_point = number_part.split('.', 1)
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
-            return 'FLT', None
-    
-    return None, None
+            return 'FLT', None 
+
+    return None, None 
 
 def identify_symbol(line, start):
     symbols = sorted(token_map.keys(), key=len, reverse=True)

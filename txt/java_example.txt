@@ -1,6 +1,6 @@
 // comenteei
-int soma(int a, int b){
-    return a + b
+int subtrai(int a, int b){
+    return a-b
 }
 
 /* bloco de comentario maluco
@@ -9,9 +9,9 @@ int soma(int a, int b){
 */
 
 int main(){
-    int a = -2;
+    int a2 = -017;
     int b = 3;
-    int c = soma(a,b);
-    float d = 4.32;
+    int c = subtrai(a,b);
+    float d = 4..2;
     system.out.print("resultado: int", c);
 }
