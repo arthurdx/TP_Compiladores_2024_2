@@ -13,5 +13,6 @@ int main(){
     int b = 3; //teste
     int c = subtrai(a,b);
     float d = 4..2;
-    system.out.print("resultado: int", c);
+    system.out.print("resultado: int, c);
+    int a3 = 11
 }

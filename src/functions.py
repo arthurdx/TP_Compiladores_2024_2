@@ -38,7 +38,7 @@ def read_java_file(filename):
                         while current_row < len(line) and line[current_row] != '"':
                             current_word += line[current_row]
                             current_row += 1
-                        current_word += '"'
+                        # current_word += '"'
                         process_token(current_word, output, current_line, current_row)
                         current_word = ""
                     elif ch == '/' and current_word == '/':
@@ -60,7 +60,8 @@ def read_java_file(filename):
                     process_token(current_word, output, current_line, current_row)
             else:
                 while '*/' not in line:
-                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
+                    if len(line) <= 1:
+                        raise ValueError(f'Bloco de comentário não fechado, linha: {comment_start_line + 1}')
                     current_line += 1
                     break
                 else:
@@ -87,13 +88,12 @@ def process_token(word, output, current_line, current_row):
             print(f"IDEN: '{word}'")
             output_line = ('IDEN', word, current_line, current_row - len(word))
             output.append(output_line)
-        elif word.startswith('"'):
-            if word.endswith('"'):
+        elif word.startswith('"') and word.endswith('"'):
                 print(f"STR: {word}")
                 output_line = ('STR', word, current_line, current_row - len(word))
                 output.append(output_line)
-            else:
-                raise ValueError(f"String not closed: {word}")
+        else:
+            raise ValueError(f"String não fechada na linha: {current_line}")
     except ValueError as e:
         print(e)
 
