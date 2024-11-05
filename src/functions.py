@@ -60,8 +60,7 @@ def read_java_file(filename):
                     process_token(current_word, output, current_line, current_row)
             else:
                 while '*/' not in line:
-                    if len(line) <= 1:
-                        raise ValueError(f'Bloco de comentário não fechado, linha: {comment_start_line + 1}')
+                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
                     current_line += 1
                     break
                 else:
@@ -98,8 +97,7 @@ def process_token(word, output, current_line, current_row):
         print(e)
 
 def identify_number(word):
-    if '..' in word or word.count('.') > 1 or word.endswith('.'):
-        raise ValueError(f"Erro no número de ponto flutuante: '{word}' tem formato inválido.")
+    assert not '..' in word or word.count('.') < 1 or not word.endswith('.'), f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
 
     if word.isdigit():
         return 'INT'
@@ -110,6 +108,7 @@ def identify_number(word):
     elif '.' in word:
         before_point, after_point = word.split('.', 1)
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
+            assert after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
             return 'FLT'
     return None
 

@@ -1,6 +1,6 @@
 // comenteei
 int subtrai(int a, int b){
-    return a - b
+    return a - b;
 }
 
 /* bloco de comentario maluco
@@ -12,7 +12,7 @@ int main(){
     int a2 = -017;
     int b = 3; //teste
     int c = subtrai(a,b);
-    float d = 4..2;
-    system.out.print("resultado: int, c);
-    int a3 = 11
+    float d = 4..s2;
+    system.out.print("resultado: int", c);
+    int a3 = 11;
 }
