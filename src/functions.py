@@ -43,17 +43,6 @@ def read_java_file(filename):
                         current_word = ""
                     elif ch == '/' and current_word == '/':
                         break
-                    elif ch == '-':
-                        if current_row + 1 < len(line) and (line[current_row + 1].isdigit() or line[current_row + 1] == '.'):
-                            current_word += ch
-                        else:
-                            if current_word:
-                                process_token(current_word, output, current_line, current_row)
-                                current_word = ""
-                            symbol_token = identify_symbol(line, current_row)
-                            if symbol_token:
-                                process_token(symbol_token, output, current_line, current_row)
-                                current_row += len(symbol_token) - 1
                     else:
                         if current_word:
                             process_token(current_word, output, current_line, current_row)
@@ -80,67 +69,49 @@ def read_java_file(filename):
         return output
 
 def process_token(word, output, current_line, current_row):
-    token, error_message = identify_number(word) if word not in token_map else (list(token_map[word].values())[0], None)
+    try:
+        token = identify_number(word) if word not in token_map else list(token_map[word].values())[0]
 
-    if error_message:
-        print(error_message)
-    elif token:
-        if token == 'FLT' and not word.endswith('.'):
-            word += '0'
-        print(f"{token}: '{word}'")
-        output_line = (token, word, current_line, current_row - len(word))
-        output.append(output_line)
-    elif word in token_map:
-        token = list(token_map[word].keys())[0]
-        print(f"{token}: '{word}'")
-        output_line = (token, word, current_line, current_row - len(word))
-        output.append(output_line)
-    elif word.isidentifier():
-        print(f"IDEN: '{word}'")
-        output_line = ('IDEN', word, current_line, current_row - len(word))
-        output.append(output_line)
-    elif word.startswith('"'):
-        if word.endswith('"'):
-            print(f"STR: {word}")
-            output_line = ('STR', word, current_line, current_row - len(word))
+        if token:
+            if token == 'FLT' and not word.endswith('.'):
+                word += '0'
+            print(f"{token}: '{word}'")
+            output_line = (token, word, current_line, current_row - len(word))
             output.append(output_line)
-        else:
-            raise ValueError(f"String not closed: {word}")
+        elif word in token_map:
+            token = list(token_map[word].keys())[0]
+            print(f"{token}: '{word}'")
+            output_line = (token, word, current_line, current_row - len(word))
+            output.append(output_line)
+        elif word.isidentifier():
+            print(f"IDEN: '{word}'")
+            output_line = ('IDEN', word, current_line, current_row - len(word))
+            output.append(output_line)
+        elif word.startswith('"'):
+            if word.endswith('"'):
+                print(f"STR: {word}")
+                output_line = ('STR', word, current_line, current_row - len(word))
+                output.append(output_line)
+            else:
+                raise ValueError(f"String not closed: {word}")
+    except ValueError as e:
+        print(e)
 
 def identify_number(word):
-    errors = []
+    if '..' in word or word.count('.') > 1 or word.endswith('.'):
+        raise ValueError(f"Erro no número de ponto flutuante: '{word}' tem formato inválido.")
 
-    is_negative = word.startswith('-')
-
-    if is_negative:
-        number_part = word[1:]
-    else:
-        number_part = word
-
-    if '..' in number_part:
-        errors.append(f"Erro: número '{word}' não pode conter dois ou mais pontos consecutivos.")
-
-    if number_part.count('.') > 1:
-        errors.append(f"Erro: número '{word}' não pode ter mais de um ponto.")
-
-    if number_part.endswith('.') and len(number_part) > 1:
-        errors.append(f"Erro: número '{word}' não pode terminar com um ponto sem dígitos.")
-
-    if errors:
-        return None, " | ".join(errors)
-
-    if number_part.isdigit():
-        return 'INT', None
-    elif number_part.startswith('0') and all('0' <= ch <= '7' for ch in number_part[1:]):
-        return 'OCT', None
-    elif number_part.startswith(('0x')) and all(ch.isdigit() or 'A' <= ch <= 'F' for ch in number_part[2:]):
-        return 'HEX', None 
-    elif '.' in number_part:
-        before_point, after_point = number_part.split('.', 1)
+    if word.isdigit():
+        return 'INT'
+    elif word.startswith('0') and all('0' <= ch <= '7' for ch in word[1:]):
+        return 'OCT'
+    elif word.startswith(('0x')) and all(ch.isdigit() or 'A' <= ch <= 'F' for ch in word[2:]):
+        return 'HEX'
+    elif '.' in word:
+        before_point, after_point = word.split('.', 1)
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
-            return 'FLT', None 
-
-    return None, None 
+            return 'FLT'
+    return None
 
 def identify_symbol(line, start):
     symbols = sorted(token_map.keys(), key=len, reverse=True)
