@@ -1,4 +1,5 @@
-from utils import token_map  # Importa o mapa de tokens
+import string
+from utils import token_map
 
 def read_java_file(filename):
     with open(filename, 'r') as file:
@@ -21,6 +22,7 @@ def read_java_file(filename):
                     elif ch == '/' and current_row + 1 < len(line) and line[current_row + 1] == '*':
                         comment_start_line = current_line
                         reading_comment = True
+                        current_row += 1
                         break
 
                     if ch.isalpha():
@@ -38,20 +40,24 @@ def read_java_file(filename):
                         while current_row < len(line) and line[current_row] != '"':
                             current_word += line[current_row]
                             current_row += 1
-                        # current_word += '"'
-                        process_token(current_word, output, current_line, current_row)
-                        current_word = ""
-                    elif ch == '/' and current_word == '/':
-                        break
+                        if current_row < len(line):
+                            current_word += '"'
+                            process_token(current_word, output, current_line, current_row)
+                            current_word = ""
+                        else:
+                            assert False, f'String não fechada na linha {current_line + 1}: {current_word}'
+                    elif ch in string.punctuation:
+                        if current_word:
+                            process_token(current_word, output, current_line, current_row)
+                            current_word = ""
+                        symbol_token = identify_symbol(line, current_row)
+                        assert symbol_token is not None, f"Símbolo inválido na linha {current_line + 1}: '{ch}'"
+                        process_token(symbol_token, output, current_line, current_row)
+                        current_row += len(symbol_token) - 1
                     else:
                         if current_word:
                             process_token(current_word, output, current_line, current_row)
                             current_word = ""
-
-                        symbol_token = identify_symbol(line, current_row)
-                        if symbol_token:
-                            process_token(symbol_token, output, current_line, current_row)
-                            current_row += len(symbol_token) - 1
 
                     current_row += 1
 
@@ -62,9 +68,8 @@ def read_java_file(filename):
                 while '*/' not in line:
                     assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
                     current_line += 1
-                    break
-                else:
-                    reading_comment = False
+                    line = next(file, '')
+                reading_comment = False
 
         return output
 
@@ -88,16 +93,16 @@ def process_token(word, output, current_line, current_row):
             output_line = ('IDEN', word, current_line, current_row - len(word))
             output.append(output_line)
         elif word.startswith('"') and word.endswith('"'):
-                print(f"STR: {word}")
-                output_line = ('STR', word, current_line, current_row - len(word))
-                output.append(output_line)
+            print(f"STR: {word}")
+            output_line = ('STR', word, current_line, current_row - len(word))
+            output.append(output_line)
         else:
-            raise ValueError(f"String não fechada na linha: {current_line}")
+            raise ValueError(f"String não fechada na linha: {current_line + 1}")
     except ValueError as e:
         print(e)
 
 def identify_number(word):
-    assert not '..' in word or word.count('.') < 1 or not word.endswith('.'), f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
+    assert not ('..' in word or word.endswith('.')), f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
 
     if word.isdigit():
         return 'INT'
@@ -107,8 +112,8 @@ def identify_number(word):
         return 'HEX'
     elif '.' in word:
         before_point, after_point = word.split('.', 1)
+        assert after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
-            assert after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
             return 'FLT'
     return None
 
@@ -117,6 +122,7 @@ def identify_symbol(line, start):
     for symbol in symbols:
         if line.startswith(symbol, start):
             return symbol
+    assert False, f"Símbolo ou combinação inválida na linha: '{line[start:]}'"
     return None
 
 def write_output_file(filename, content):
