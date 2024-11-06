@@ -7,15 +7,12 @@ def read_java_file(filename):
         current_line = 0
         reading_comment = False
         for line in file:
-            if line == '\n':
-                line.replace('\n', '\\n')
             current_row = 0
             current_word = ""
 
             if not reading_comment:
                 while current_row < len(line):
                     ch = line[current_row]
-
                     if ch == '/' and current_row + 1 < len(line) and line[current_row + 1] == '/':
                         break
 
@@ -40,6 +37,8 @@ def read_java_file(filename):
                         while current_row < len(line) and line[current_row] != '"':
                             current_word += line[current_row]
                             current_row += 1
+                            if ch == '\\':
+                                print("achei")
                         if current_row < len(line):
                             current_word += '"'
                             process_token(current_word, output, current_line, current_row)
@@ -54,6 +53,8 @@ def read_java_file(filename):
                         assert symbol_token is not None, f"Símbolo inválido na linha {current_line + 1}: '{ch}'"
                         process_token(symbol_token, output, current_line, current_row)
                         current_row += len(symbol_token) - 1
+
+            
                     else:
                         if current_word:
                             process_token(current_word, output, current_line, current_row)
@@ -65,9 +66,10 @@ def read_java_file(filename):
                 if current_word:
                     process_token(current_word, output, current_line, current_row)
             else:
+                current_line += 1
                 while '*/' not in line:
-                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
                     current_line += 1
+                    assert len(line) > 1, f'Bloco de comentário não fechado, linha: {comment_start_line + 1}'
                     line = next(file, '')
                 reading_comment = False
 
