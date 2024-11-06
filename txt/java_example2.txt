@@ -1,0 +1,8 @@
+void main(){
+    system.out.print("cavalo");
+    // comenteei
+    int a = 2;
+    int b = 3;
+    int c = a + b;
+    system.out.print("resultado: int", c);
+}

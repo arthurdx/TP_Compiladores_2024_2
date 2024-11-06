@@ -50,7 +50,7 @@ def read_java_file(filename):
                         if current_word:
                             process_token(current_word, output, current_line, current_row)
                             current_word = ""
-                        symbol_token = identify_symbol(line, current_row)
+                        symbol_token = identify_symbol(line, current_row, current_line)
                         assert symbol_token is not None, f"Símbolo inválido na linha {current_line + 1}: '{ch}'"
                         process_token(symbol_token, output, current_line, current_row)
                         current_row += len(symbol_token) - 1
@@ -80,24 +80,26 @@ def process_token(word, output, current_line, current_row):
         if token:
             if token == 'FLT' and not word.endswith('.'):
                 word += '0'
-            print(f"{token}: '{word}'")
-            output_line = (token, word, current_line, current_row - len(word))
+           #print(f"{token}: '{word}'")
+            if word in string.punctuation:
+                output_line = (token, word, current_line + 1, current_row - len(word) + 2)
+            else:
+                output_line = (token, word, current_line + 1, current_row - len(word) + 1)
+            
             output.append(output_line)
         elif word in token_map:
             token = list(token_map[word].keys())[0]
-            print(f"{token}: '{word}'")
-            output_line = (token, word, current_line, current_row - len(word))
+           # print(f"{token}: '{word}'")
+            output_line = (token, word, current_line + 1, current_row - len(word) + 1)
             output.append(output_line)
         elif word.isidentifier():
-            print(f"IDEN: '{word}'")
-            output_line = ('IDEN', word, current_line, current_row - len(word))
+           #print(f"IDEN: '{word}'")
+            output_line = (token_map['IDEN'], word, current_line + 1, current_row - len(word) + 1)
             output.append(output_line)
         elif word.startswith('"') and word.endswith('"'):
-            print(f"STR: {word}")
-            output_line = ('STR', word, current_line, current_row - len(word))
+            # print(f"STR: {word}")
+            output_line = (token_map['STR'], word, current_line + 1, current_row - len(word) + 1)
             output.append(output_line)
-        else:
-            raise ValueError(f"String não fechada na linha: {current_line + 1}")
     except ValueError as e:
         print(e)
 
@@ -105,24 +107,24 @@ def identify_number(word):
     assert not ('..' in word or word.endswith('.')), f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
 
     if word.isdigit():
-        return 'INT'
+        return token_map['INT']
     elif word.startswith('0') and all('0' <= ch <= '7' for ch in word[1:]):
-        return 'OCT'
+        return token_map['OCT']
     elif word.startswith(('0x')) and all(ch.isdigit() or 'A' <= ch <= 'F' for ch in word[2:]):
-        return 'HEX'
+        return token_map['HEX']
     elif '.' in word:
         before_point, after_point = word.split('.', 1)
         assert after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
-            return 'FLT'
+            return token_map['FLT']
     return None
 
-def identify_symbol(line, start):
+def identify_symbol(line_content, start, current_line):
     symbols = sorted(token_map.keys(), key=len, reverse=True)
     for symbol in symbols:
-        if line.startswith(symbol, start):
+        if line_content.startswith(symbol, start):
             return symbol
-    assert False, f"Símbolo ou combinação inválida na linha: '{line[start:]}'"
+    assert False, f'Símbolo ou combinação inválida {line_content[start:-2]} na linha: {current_line + 1}'
     return None
 
 def write_output_file(filename, content):
