@@ -43,7 +43,7 @@ scan
 (
 )
 .
-"\nresultado: 10\t"
+"resultado: 10\t"
 110
 0123
 0xFFF
