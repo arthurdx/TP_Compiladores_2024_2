@@ -91,6 +91,7 @@ def process_token(word, output, current_line, current_row):
         if token:
             if token == 46:
                 word += '0'
+                current_row += 1
            #print(f"{token}: '{word}'")
             if word[0] in string.punctuation:
                 if len(word) == 1:
