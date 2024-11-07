@@ -45,7 +45,7 @@ def read_java_file(filename):
                                     current_word += '\t'
                                     current_row += 1
                                 else:
-                                    current_word += '\\' + next_ch  # Mantém a barra invertida
+                                    current_word += '\\' # Mantém a barra invertida
                             else:
                                 current_word += ch
                             current_row += 1
@@ -89,11 +89,14 @@ def process_token(word, output, current_line, current_row):
         token = identify_number(word) if word not in token_map else list(token_map[word].values())[0]
 
         if token:
-            if token == 'FLT' and not word.endswith('.'):
+            if token == 46:
                 word += '0'
            #print(f"{token}: '{word}'")
-            if word in string.punctuation:
-                output_line = (token, word, current_line + 1, current_row - len(word) + 2)
+            if word[0] in string.punctuation:
+                if len(word) == 1:
+                    output_line = (token, word, current_line + 1, current_row - len(word) + 2)
+                else:
+                    output_line = (token, word, current_line + 1, current_row - len(word) + 3)
             else:
                 output_line = (token, word, current_line + 1, current_row - len(word) + 1)
             
@@ -117,7 +120,7 @@ def process_token(word, output, current_line, current_row):
 def identify_number(word):
     assert not ('..' in word or word.endswith('.')), f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
 
-    if word.isdigit():
+    if word[0] not in '0' and word.isdigit():
         return token_map['INT']
     elif word.startswith('0') and all('0' <= ch <= '7' for ch in word[1:]):
         return token_map['OCT']
@@ -126,6 +129,7 @@ def identify_number(word):
     elif '.' in word:
         before_point, after_point = word.split('.', 1)
         assert after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
+        assert '.' not in after_point, f"Erro no número de ponto flutuante: '{word}' tem formato inválido."
         if before_point.isdigit() and (after_point.isdigit() or after_point == ""):
             return token_map['FLT']
     return None
