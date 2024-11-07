@@ -8,8 +8,8 @@ def main():
         return
     filename = sys.argv[1]
     output = read_java_file(filename)
-    print(output)
-    
+    print(output[0][1])   
+     
 if __name__ == '__main__':
     main()
     
