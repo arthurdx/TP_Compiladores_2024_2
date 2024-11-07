@@ -1,0 +1,9 @@
+// comentario
+void main(){
+    system.out.print("\tcavalo");
+    // comenteei
+    float a = 4.2;
+    int b = 03;
+    int c = a + b;
+    system.out.print("resultado: int", c);
+}
