@@ -1,4 +1,5 @@
-from functions import *
+from functions import *   
+from sintax import *      
 import sys
 
 def main():
@@ -6,10 +7,16 @@ def main():
         print("Passe o caminho do arquivo txt como argumento no terminal" + 
         "\nexemplo: python3 src/main.py <txt/arquivo.txt>")
         return
+
     filename = sys.argv[1]
-    output = read_java_file(filename)
-    print(output)   
-     
+    tokens = read_java_file(filename)
+    print("Tokens gerados:", tokens)
+    
+    try:
+        parse_program(tokens)
+        print("Análise sintática concluída com sucesso.")
+    except SyntaxError as e:
+        print(f"Erro sintático: {e}")
+    
 if __name__ == '__main__':
     main()
-    
