@@ -6,7 +6,7 @@ string name;
 a = 10;
 b = 20;
 x = 3.14;
-if (a > b) {
+if (a==b) {
     a = a + b;
 } else {
     b = b - a;

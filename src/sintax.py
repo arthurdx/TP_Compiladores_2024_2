@@ -60,11 +60,29 @@ def parse_assignment(token_list):
     parse_expression(token_list)
 
 def parse_expression(token_list):
-    """<expression> -> <term> { ('+' | '-') <term> }"""
-    parse_term(token_list)
-    while current_token(token_list) and current_token(token_list)[0] in [1, 2]:  # '+' (ADD) e '-' (SUB)
-        match(current_token(token_list)[0], token_list)
-        parse_term(token_list)
+    """<expression> -> <or>"""
+    parse_or(token_list)
+
+def parse_or(token_list):
+    """<or> -> <and> <restoOr>"""
+    parse_and(token_list)
+    parse_resto_or(token_list)
+
+def parse_resto_or(token_list):
+    """<restoOr> -> '||' <and> <restoOr> | & ;"""
+    match()
+
+def parse_and(token_list):
+    """<and> -> <not> <restoAnd>"""
+    parse_not(token_list)
+    if verificarestoand:
+        pass
+    match(token_list['&&']['AND'])
+
+def parse_not(token_list):
+    """<not> -> '!' <not> | <rel> ;"""
+    parse_rel(token_list)
+    
 
 def parse_term(token_list):
     """<term> -> <factor> { ('*' | '/' | '%') <factor> }"""
@@ -103,9 +121,9 @@ def parse_statement(token_list):
         parse_assignment(token_list)
     elif token[0] == 27:  # 'if'
         parse_if_stmt(token_list)
-    elif token[0] == 33:  # Código para 'break'
+    elif token[0] == 33:  
         parse_break_stmt(token_list)
-    elif token[0] == 34:  # Código para 'continue'
+    elif token[0] == 34:
         parse_continue_stmt(token_list)
     else:
         raise SyntaxError(f"Erro: Comando inválido encontrado '{token[1]}'")
@@ -121,22 +139,22 @@ def parse_if_stmt(token_list):
     parse_statement(token_list) 
     
     # Parte else
-    if current_token(token_list) and current_token(token_list)[0] == 14:  # 'else'
+    if current_token(token_list) and current_token(token_list)[0] == 14: 
         match(14, token_list)
-        parse_statement(token_list)  # Bloco de código após o else
+        parse_statement(token_list) 
 
 def parse_break_stmt(token_list):
     """<breakStmt> -> 'break'"""
-    match(33, token_list)  # 'break'
+    match(33, token_list)  
 
 def parse_continue_stmt(token_list):
     """<continueStmt> -> 'continue'"""
-    match(34, token_list)  # 'continue'
+    match(34, token_list) 
 
 def parse_program(token_list):
     """<program> -> { <statement> ';' }"""
     global list_pos
-    list_pos = 0  # Reinicia a posição para cada novo programa analisado
+    list_pos = 0  
     while current_token(token_list):
         parse_statement(token_list)
         if not current_token(token_list) or current_token(token_list)[0] != 35:  # ';' (SMCL)
