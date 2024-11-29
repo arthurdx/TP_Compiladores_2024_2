@@ -18,7 +18,7 @@ def match(expected_token, token_list):
     """
     token = current_token(token_list)
     if not token or token[0] != expected_token:
-        raise SyntaxError(f"Erro: Esperava '{expected_token}' ({get_token_name(expected_token)}), mas encontrou '{token[1] if token else None}'")
+        raise SyntaxError(f"Erro: Esperava '{expected_token}' ({get_token_name(expected_token)}), mas encontrou '{token[1] if token else None}, na linha {token[2]} e na coluna {token[3]}.'")
     next_token()
     return token
 
@@ -70,19 +70,132 @@ def parse_or(token_list):
 
 def parse_resto_or(token_list):
     """<restoOr> -> '||' <and> <restoOr> | & ;"""
-    match()
+    if current_token == token_map['||']['OR']:
+        match(token_map['||']['OR'], token_list)
+        parse_and(token_list)
+        parse_resto_or(token_list)
+
 
 def parse_and(token_list):
-    """<and> -> <not> <restoAnd>"""
+    """"<and> -> <not> <restoAnd> ;"""
     parse_not(token_list)
-    if verificarestoand:
-        pass
-    match(token_list['&&']['AND'])
+    parse_resto_and(token_list)
+
+def parse_resto_and(token_list):
+    """<restoAnd> -> '&&' <not> <restoAnd> | & ;"""
+    parse_not(token_list)
+    if current_token ==token_map['&&']['AND']:
+        match(token_map['&&']['AND'], token_list)
+        parse_not(token_list)
+        parse_resto_and(token_list)
 
 def parse_not(token_list):
     """<not> -> '!' <not> | <rel> ;"""
-    parse_rel(token_list)
-    
+    if current_token == token_map['!']['NOT']:
+        match (token_map['!']['NOT'], token_list)
+        parse_not(token_list)
+    else:
+        parse_rel(token_list)
+
+def parse_rel(token_list):
+    """<rel> -> <add> <restoRel> ;"""
+    parse_add(token_list)
+    parse_resto_rel(token_list)
+
+def pardr_resto_rel(token_list):
+    """
+    <restoRel> -> '==' <add> | '!=' <add>
+            | '<' <add> | '<=' <add> 
+            | '>' <add> | '>=' <add> | & ;
+    """
+    if current_token == token_map['==']['EQL']:
+        match (token_map['==']['EQL'])
+        parse_add(token_list)
+    elif current_token == token_map['!=']['EQL']:
+        match (token_map['!=']['DIF'])
+        parse_add(token_list)
+    elif current_token == token_map['<']['LT']:
+        match (token_map['<']['LT'])
+        parse_add(token_list) 
+    elif current_token == token_map['>']['GT']:
+        match (token_map['>']['GT'])
+        parse_add(token_list)
+    elif current_token == token_map['<=']['LT']:
+        match (token_map['<=']['LET'])
+        parse_add(token_list) 
+    elif current_token == token_map['>=']['GT']:
+        match (token_map['>=']['GET'])
+        parse_add(token_list)
+
+def parse_add(token_list):
+    """<add> -> <mult> <restoAdd> ;"""
+    parse_mult(token_list)
+    parse_resto_add(token_list)
+
+def parse_resto_add(token_list):
+    """
+    <restoAdd> -> '+' <mult> <restoAdd> 
+            | '-' <mult> <restoAdd> | & ;
+    """
+    if current_token == token_map['+']['ADD']:
+        match (token_map['+']['ADD'])
+        parse_resto_add(token_list)
+    elif current_token == token_map['-']['SUB']:
+        match (token_map['-']['SUB'])
+        parse_resto_add(token_list) 
+
+def parse_mult(token_list):
+    """<mult> -> <uno> <restoMult> ;"""
+    parse_uno(token_list)
+    parse_resto_mult(token_list)
+
+def parse_resto_mult(token_list):
+    """
+    <restoMult> -> '*' <uno> <restoMult>
+            |  '/' <uno> <restoMult> 
+            |  '%' <uno> <restoMult> | & ;
+    """
+    if current_token == token_map['*']['MULT']:
+        match (token_map['*']['MULT'])
+        parse_resto_mult(token_list)
+    elif current_token == token_map['/']['DIV']:
+        match (token_map['/']['DIV'])
+        parse_resto_mult(token_list)
+    elif current_token == token_map['%']['MOD']:
+        match (token_map['%']['MOD'])
+        parse_resto_mult(token_list)
+
+def parse_uno(token_list)
+    """<uno> -> '+' <uno> | '-' <uno> | <fator> ;"""
+    if current_token == token_map['+']['ADD']:
+        match (token_map['+']['ADD'], token_list)
+        parse_uno(token_list)
+    elif current_token == token_map['-']['SUB']:
+        match (token_map['-']['SUB'], token_list)
+        parse_uno(token_list)
+    else:
+        parse_fator(token_list)
+
+def parse_fator(token_list)
+    """
+    <fator> -> 'NUMint' | 'NUMfloat' | 'NUMoct' | 'NUMhex'
+         | 'IDENT'  | '(' <expr> ')' | 'STR';
+    """
+    if current_token == token_map['']['STR']:
+        match (token_map['']['STR'], token_list)
+    elif current_token == token_map['']['INT']:
+        match (token_map['']['INT'], token_list)
+    elif current_token == token_map['']['OCT']:
+        match (token_map['']['OCT'], token_list)
+    elif current_token == token_map['']['HEX']:
+        match (token_map['']['HEX'], token_list)
+    elif current_token == token_map['']['FLT']:
+        match (token_map['']['FLT'], token_list)
+    elif current_token == token_map['']['IDEN']:
+        match (token_map['']['IDEN'], token_list)    
+    else:
+        parse_expression(token_list)
+
 
 def parse_term(token_list):
     """<term> -> <factor> { ('*' | '/' | '%') <factor> }"""
@@ -158,5 +271,5 @@ def parse_program(token_list):
     while current_token(token_list):
         parse_statement(token_list)
         if not current_token(token_list) or current_token(token_list)[0] != 35:  # ';' (SMCL)
-            raise SyntaxError(f"Erro: ';' esperado, mas encontrou '{current_token(token_list)[1] if current_token(token_list) else None}'")
+            raise SyntaxError(f"Erro: ';' esperado, mas encontrou '{current_token(token_list)[1] if current_token(token_list) else None}, na linha {current_token(token_list)[2]} e na coluna {current_token(token_list)[3]}'")
         match(35, token_list)
