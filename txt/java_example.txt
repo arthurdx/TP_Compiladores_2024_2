@@ -1,0 +1,19 @@
+int a;
+int b;
+int c;
+float x;
+string name;
+a = 10;
+b = 20;
+x = 3.14;
+if (a > b) {
+    a = a + b;
+} else {
+    b = b - a;
+}
+while (b > 0) {
+    b = b - 1;
+    if (b == 10) {
+        break;
+    }
+}
