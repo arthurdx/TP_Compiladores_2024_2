@@ -1,5 +1,5 @@
 from functions import *   
-from sintax import *      
+from classes.parser import Parser    
 import sys
 
 def main():
@@ -13,8 +13,8 @@ def main():
     print("Tokens gerados:", tokens)
     
     try:
-        parse_program(tokens)
-        print("Análise sintática concluída com sucesso.")
+        parser = Parser(tokens)
+        parser.parse_function()
     except SyntaxError as e:
         print(f"Erro sintático: {e}")
     
