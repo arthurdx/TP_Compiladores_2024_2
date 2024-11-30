@@ -61,7 +61,7 @@ class Parser():
     def parse_bloco(self):
         """<bloco> -> '{' <stmList> '}'"""
         self.consume(token_map['{']['LBRC'])
-        self.parse_stmt()
+        self.parse_stmList()
         self.consume(token_map['}']['RBRC'])
 
     def parse_stmList(self):
@@ -118,11 +118,11 @@ class Parser():
         self.consume(token_map[')']['RPAR'])
         self.parse_stmt()
 
-    def parse_optAtrib():
+    def parse_optAtrib(self):
         """<optAtrib> -> <atrib> | & ;"""
-        parse_atrib()
+        self.parse_atrib()
 
-    def parse_atrib():
+    def parse_atrib(self):
         """
         <atrib> -> 'IDENT' '=' <expr> 
          | 'IDENT' '+=' <expr> 
@@ -131,55 +131,67 @@ class Parser():
          | 'IDENT' '/=' <expr> 
          | 'IDENT' '%=' <expr>;
         """
-        consume(token_map['IDENT'])
-        self.consume([token_map['+=']['INC'], 
-                    token_map['-=']['DEC'], 
-                    token_map['*=']['ASMU'],
-                    token_map['/=']['ASDV'],
-                    token_map['%=']['ASMD']])
-        parse_expr()
+        self.consume(token_map['IDEN'])
+        if self.current_token[0] == token_map['=']['ASSG']:
+            self.consume(token_map['=']['ASSG'])
+        if self.current_token[0] == token_map['+=']['INC']:
+            self.consume(token_map['+=']['INC'])
+        if self.current_token[0] == token_map['-=']['DEC']:        
+            self.consume(token_map['-=']['DEC'])
+        if self.current_token[0] == token_map['*=']['ASMU']:
+            self.consume(token_map['*=']['ASMU'])
+        if self.current_token[0] == token_map['/=']['ASDV']:
+            self.consume(token_map['/=']['ASDV'])
+        if self.current_token[0] == token_map['%=']['ASMD']:
+            self.consume(token_map['%=']['ASMD'])
+        self.parse_expr()
+
+    def parse_optExpr(self):
+        """<optExpr> -> <expr> | & """
+        if self.current_token[0] not in [token_map[')']['RPAR'], token_map[';']['SMCL']]:
+            self.parse_expr()
                     
 
     def parse_expr(self):
         "<expr> -> <or> ;"
-        parse_or()
+        self.parse_or()
 
     def parse_or(self):
         """<or> -> <and> <restoOr> ;"""
-        parse_and()
-        parse_resto_or()
+        self.parse_and()
+        self.parse_resto_or()
 
     def parse_resto_or(self):
         """<restoOr> -> '||' <and> <restoOr> | & ;"""
         if self.current_token[0] == token_map['||']['OR']:
             self.consume(token_map['||']['OR'])
-            parse_and()    
-            parse_resto_or()    
+            self.parse_and()    
+            self.parse_resto_or()    
 
     def parse_and(self):
         """<and> -> <not> <restoAnd> ;"""
-        parse_not()
-        parse_resto_and()
+        self.parse_not()
+        self.parse_resto_and()
 
     def parse_resto_and(self):
         """<restoAnd> -> '&&' <not> <restoAnd> | & ;"""
         if self.current_token[0] == token_map['&&']['AND']:
             self.consume(token_map['&&']['AND'])
-            parse_not()    
-            parse_resto_and()
+            self.parse_not()    
+            self.parse_resto_and()
 
     def parse_not(self):
         """<not> -> '!' <not> | <rel> ;"""
         if self.current_token[0] == token_map['!']['NOT']:
             self.consume(token_map['!']['NOT'])
-            parse_not()  
+            self.parse_not()  
         else:  
-            parse_rel()
+            self.parse_rel()
         
     def parse_rel(self):
         """<rel> -> <add> <restoRel> ;"""
-        parse_add()
-        parse_resto_rel
+        self.parse_add()
+        self.parse_resto_rel()
 
     def parse_resto_rel(self):
         """<restoRel> -> '==' <add> | '!=' <add>
@@ -188,55 +200,55 @@ class Parser():
         """
         if self.current_token[0] == token_map['==']['EQL']:
             self.consume(token_map['==']['EQL'])
-            parse_add()
+            self.parse_add()
         elif self.current_token[0] == token_map['!=']['DIF']:
             self.consume(token_map['!=']['DIF'])
-            parse_add()
+            self.parse_add()
         elif self.current_token[0] == token_map['>']['GT']:
             self.consume(token_map['>']['GT'])
-            parse_add()
+            self.parse_add()
         elif self.current_token[0] == token_map['>=']['GET']:
             self.consume(token_map['>=']['GET'])
-            parse_add()
+            self.parse_add()
         elif self.current_token[0] == token_map['<']['LT']:
             self.consume(token_map['<']['LT'])
-            parse_add()
+            self.parse_add()
         elif self.current_token[0] == token_map['<=']['LET']:
             self.consume(token_map['<=']['LET'])
-            parse_add()
+            self.parse_add()
 
     def parse_add(self):
         """<add> -> <mult> <restoAdd> ;"""
-        parse_mult()
-        parse_resto_add()
+        self.parse_mult()
+        self.parse_resto_add()
 
     def parse_resto_add(self):
         """<restoAdd> -> '+' <mult> <restoAdd> 
             | '-' <mult> <restoAdd> | & ;""" 
         if self.current_token[0] == token_map['+']['ADD']:
             self.consume(token_map['+']['ADD'])
-            parse_mult() 
-            parse_resto_add()
+            self.parse_mult() 
+            self.parse_resto_add()
         elif self.current_token[0] == token_map['-']['SUB']:
             self.consume(token_map['-']['SUB'])
-            parse_mult()  
-            parse_resto_add()
+            self.parse_mult()  
+            self.parse_resto_add()
 
     def parse_mult(self):
         """<mult> -> <uno> <restoMult> ;"""
-        parse_uno()
-        parse_resto_mult()
+        self.parse_uno()
+        self.parse_resto_mult()
 
     def parse_uno(self):
         """<uno> -> '+' <uno> | '-' <uno> | <fator> ;"""
         if self.current_token[0] == token_map['+']['ADD']:
             self.consume(token_map['+']['ADD'])
-            parse_uno() 
+            self.parse_uno() 
         elif self.current_token[0] == token_map['-']['SUB']:
             self.consume(token_map['-']['SUB'])
-            parse_uno()
+            self.parse_uno()
         else:
-            parse_fator()
+            self.parse_fator()
 
     def parse_resto_mult(self):
         """<restoMult> -> '*' <uno> <restoMult>
@@ -245,16 +257,16 @@ class Parser():
         """
         if self.current_token[0] == token_map['*']['MULT']:
             self.consume(token_map['*']['MULT'])
-            parse_uno()
-            parse_resto_mult()
+            self.parse_uno()
+            self.parse_resto_mult()
         elif self.current_token[0] == token_map['/']['DIV']:
             self.consume(token_map['/']['DIV'])
-            parse_uno()
-            parse_resto_mult()
+            self.parse_uno()
+            self.parse_resto_mult()
         elif self.current_token[0] == token_map['%']['MOD']:
             self.consume(token_map['%']['MOD'])
-            parse_uno()
-            parse_resto_mult()
+            self.parse_uno()
+            self.parse_resto_mult()
 
     def parse_ioStmt(self):
         """<ioStmt> -> 'system' '.' 'in' '.' 'scan'  '(' <type> ',' 'IDENT' ')' ';' 
@@ -282,8 +294,8 @@ class Parser():
             
     def parse_outList(self):
         """<outList> -> <out> <restoOutList> ;"""
-        parse_out()
-        parse_restoOutList()
+        self.parse_out()
+        self.parse_restoOutList()
     
     def parse_out():
         """<out> -> 'STR' | 'IDENT' | 'NUMdec' | 'NUMfloat' | 'NUMoct' | 'NUMhex'"""
@@ -321,10 +333,10 @@ class Parser():
         """<ifStmt> -> 'if' '(' <expr> ')' <stmt> <elsePart> ;"""
         self.consume(token_map['if']['IF'])
         self.consume(token_map['(']['LPAR'])
-        parse_expr()
+        self.parse_expr()
         self.consume(token_map[')']['RPAR'])
-        parse_stmt()
-        parse_elsePart()
+        self.parse_stmt()
+        self.parse_elsePart()
         
     def parse_elsePart(self):
         """<elsePart> -> 'else' <stmt> | & ;"""
@@ -359,6 +371,11 @@ class Parser():
         self.parse_identList()
         self.consume(token_map[';']['SMCL'])
 
+    def parse_identList(self):
+        """<identList> -> 'IDENT' <restoIdentList>"""
+        self.consume(token_map['IDEN'])
+        self.parse_restoIdentList()
+
     def parse_restoIdentList(self):
         """<restoIdentList> -> ',' 'IDENT' <restoIdentList> | & ;"""
         if self.current_token[0] == token_map[',']['CLN']:
@@ -366,8 +383,5 @@ class Parser():
             self.consume(token_map['IDEN'])
             self.parse_restoIdentList()
     
-    def parse_identList(self):
-        """<identList> -> 'IDENT' <restoIdentList>"""
-        self.consume(token_map['IDEN'])
-        self.parse_restoIdentList()
+    
 
