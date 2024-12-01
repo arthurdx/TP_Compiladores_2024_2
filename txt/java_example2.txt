@@ -1,5 +1,5 @@
 // comentario
-void main(){
+ main(){
     system.out.print("\tcavalo");
     // comenteei
     float a = 4.2;
