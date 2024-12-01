@@ -10,6 +10,7 @@ class Parser():
     def set_current_token(self):
         """Define o token atual."""
         self.current_token = self.token_list[self.pos] if self.pos < len(self.token_list) else None
+        self.parsed = True if not self.current_token else False
     
     def next_position(self):
         """Avanca para o proximo token."""
@@ -28,6 +29,9 @@ class Parser():
         
     def consume(self, expected_type):
         """Verifica e consome o token atual se ele corresponder a um dos tipos esperados."""
+        if self.parsed:
+            print("Programa sintaticamente correto")
+            return
         
         if not (self.current_token and self.current_token[0] == expected_type):
             # Token nao corresponde, lanca erro
@@ -35,7 +39,7 @@ class Parser():
             raise SyntaxError(
                 f"Token inesperado '{self.current_token[1] if self.current_token else None}'. "
                 f"Esperado: {expected_name}, "
-                f"Na Linha: {self.current_token[2]} e na Coluna: {self.current_token[3]}."
+                f"Na Linha: {self.current_token[2] if self.current_token else None} e na Coluna: {self.current_token[3] if self.current_token else None}."
             )
         self.next_position()
 
@@ -66,8 +70,9 @@ class Parser():
 
     def parse_stmList(self):
         """<stmList> -> <stm> <stmList> | &"""
-        self.parse_stmt()
-        self.parse_stmList()
+        if self.current_token and self.current_token[0] != token_map['}']['RBRC']:
+            self.parse_stmt()
+            self.parse_stmList()
 
     def parse_stmt(self):
         """
@@ -103,6 +108,8 @@ class Parser():
             self.parse_declaration()            
         elif self.current_token[0] == token_map[';']['SMCL']:
             self.consume(token_map[';']['SMCL'])
+        if self.current_token[0] == token_map['}']['RBRC']:
+            self.consume(token_map['}']['RBRC'])
         
         
 
@@ -148,8 +155,7 @@ class Parser():
 
     def parse_optExpr(self):
         """<optExpr> -> <expr> | & """
-        if self.current_token[0] not in [token_map[')']['RPAR'], token_map[';']['SMCL']]:
-            self.parse_expr()
+        self.parse_expr()
                     
 
     def parse_expr(self):
@@ -280,7 +286,7 @@ class Parser():
             self.consume(token_map['(']['LPAR'])
             self.parse_type()
             self.consume(token_map[',']['CLN'])
-            self.consume(token_map['IDENT'])
+            self.consume(token_map['IDEN'])
             self.consume(token_map[')']['RPAR'])
             self.consume(token_map[';']['SMCL'])
         if self.current_token[0] == token_map['out']['OUT']:
@@ -297,14 +303,14 @@ class Parser():
         self.parse_out()
         self.parse_restoOutList()
     
-    def parse_out():
+    def parse_out(self):
         """<out> -> 'STR' | 'IDENT' | 'NUMdec' | 'NUMfloat' | 'NUMoct' | 'NUMhex'"""
         if self.current_token[0] == token_map['STR']:
             self.consume(token_map['STR'])
         if self.current_token[0] == token_map['IDEN']:
             self.consume(token_map['IDEN'])
-        if self.current_token[0] == token_map['DEC']:
-            self.consume(token_map['DEC'])
+        if self.current_token[0] == token_map['INT']:
+            self.consume(token_map['INT'])
         if self.current_token[0] == token_map['FLT']:
             self.consume(token_map['FLT'])
         if self.current_token[0] == token_map['OCT']:
@@ -312,7 +318,7 @@ class Parser():
         if self.current_token[0] == token_map['HEX']:
             self.consume(token_map['HEX'])
         
-    def parse_restoOutList():
+    def parse_restoOutList(self):
         """<restoOutList> -> ',' <out> <restoOutList> | & ;"""
         if self.current_token[0] == token_map[',']['CLN']:
             self.consume(token_map[',']['CLN'])
@@ -362,8 +368,9 @@ class Parser():
             self.consume(token_map['(']['LPAR'])
             self.parse_expr()
             self.consume(token_map[')']['RPAR'])
-        elif self.current_token == token_map['STR']:
+        elif self.current_token[0] == token_map['STR']:
             self.consume(token_map['STR'])
+
     
     def parse_declaration(self):
         """<declaration> -> <type> <identList> ';'"""
