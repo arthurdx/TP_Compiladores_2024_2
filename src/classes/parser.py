@@ -4,19 +4,18 @@ class Parser():
     def __init__(self, token_list):
         self.token_list = token_list
         self.pos = 0
-        self.current_token = self.token_list[self.pos]
-        self.parsed = None #True no final da análise
+        self.current_token = None
 
     def set_current_token(self):
         """Define o token atual."""
         self.current_token = self.token_list[self.pos] if self.pos < len(self.token_list) else None
-        self.parsed = True if not self.current_token else False
-    
+
     def next_position(self):
         """Avanca para o proximo token."""
-        self.pos += 1
-        self.set_current_token()
-    
+        if self.pos < len(self.token_list):
+            self.pos += 1
+            self.set_current_token()
+
 
     def get_token_name(self, token_value):
         """Obtem o nome do token a partir do token_map."""
@@ -29,27 +28,29 @@ class Parser():
         
     def consume(self, expected_type):
         """Verifica e consome o token atual se ele corresponder a um dos tipos esperados."""
-        if self.parsed:
-            print("Programa sintaticamente correto")
-            return
-        
-        if not (self.current_token and self.current_token[0] == expected_type):
-            # Token nao corresponde, lanca erro
+        if not(self.current_token and self.current_token[0]) == expected_type:
+            # Token nao corresponde, lanca erro 
             expected_name = self.get_token_name(expected_type)
             raise SyntaxError(
                 f"Token inesperado '{self.current_token[1] if self.current_token else None}'. "
                 f"Esperado: {expected_name}, "
                 f"Na Linha: {self.current_token[2] if self.current_token else None} e na Coluna: {self.current_token[3] if self.current_token else None}."
             )
+        print(f"Token consumido: {self.current_token[1]}")
         self.next_position()
 
     def parse_function(self):
         """<function*> -> <type> 'IDENT' '(' ')' <bloco>'"""
+        self.set_current_token()
         self.parse_type()
         self.consume(token_map['IDEN'])
         self.consume(token_map['(']['LPAR'])
         self.consume(token_map[')']['RPAR'])
         self.parse_bloco()
+        if self.pos < len(self.token_list):
+            raise SyntaxError(f"Token inesperado '{self.current_token[1] if self.current_token else None}', "
+                              f"na linha '{self.current_token[2] if self.current_token else None}' e "
+                              f"na coluna '{self.current_token[3] if self.current_token else None}'. Esperado: fim do arquivo.")
 
     def parse_type(self):
         """<type> -> 'int' | 'float' | 'string'"""
@@ -108,7 +109,7 @@ class Parser():
             self.parse_declaration()            
         elif self.current_token[0] == token_map[';']['SMCL']:
             self.consume(token_map[';']['SMCL'])
-        if self.current_token[0] == token_map['}']['RBRC']:
+        elif self.current_token[0] == token_map['}']['RBRC']:
             self.consume(token_map['}']['RBRC'])
         
         
@@ -127,7 +128,8 @@ class Parser():
 
     def parse_optAtrib(self):
         """<optAtrib> -> <atrib> | & ;"""
-        self.parse_atrib()
+        if self.current_token[0] == token_map['IDEN']:
+            self.parse_atrib()
 
     def parse_atrib(self):
         """
@@ -155,7 +157,8 @@ class Parser():
 
     def parse_optExpr(self):
         """<optExpr> -> <expr> | & """
-        self.parse_expr()
+        if self.current_token[0] != token_map[';']['SMCL']:
+            self.parse_expr()
                     
 
     def parse_expr(self):
@@ -391,4 +394,3 @@ class Parser():
             self.parse_restoIdentList()
     
     
-

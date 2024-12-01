@@ -15,3 +15,7 @@ int main(){
             d=1;
     }
 }
+
+int a,b,c;
+
+

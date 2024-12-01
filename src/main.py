@@ -1,6 +1,7 @@
 from functions import *   
 from classes.parser import Parser    
 import sys
+import traceback
 
 def main():
     if len(sys.argv) < 2:
@@ -15,6 +16,7 @@ def main():
     try:
         parser = Parser(tokens)
         parser.parse_function()
+        print("Código sintaticamente correto")
     except SyntaxError as e:
         print(f"Erro sintático: {e}")
     
