@@ -22,11 +22,8 @@ class Interpreter:
         """Executa uma lista de instruções do código intermediário."""
         self.preprocess_labels()
         
-        print("Iniciando execução das instruções...")  # Verificação inicial
-
         while self.running and self.instruction_pointer < len(self.instructions):
             instr = self.instructions[self.instruction_pointer]
-            print(f"Processando instrução: {instr}")  # Exibir a instrução atual
             self.instruction_pointer += 1
             self.execute_instruction(instr)
 
@@ -39,28 +36,31 @@ class Interpreter:
     def execute_instruction(self, instr):
         """Executa uma única instrução."""
         op, guardar, operando1, operando2 = instr
-        
-        # Log da instrução
-        self.log(op, guardar, operando1, operando2)
 
-        if op == "=":  # Atribuição
+        if op == "=":  
             self.memory[guardar] = self.resolve_operand(operando1)
-        elif op in {"+", "-", "*", "/", "%", "//", "+", "-"}:  # Operações aritméticas
+        elif op in {"+", "-", "*", "/", "%", "//", "+", "-"}:  
             val1 = self.resolve_operand(operando1)
             val2 = self.resolve_operand(operando2) if operando2 else None
             self.memory[guardar] = self.perform_arithmetic_operation(op, val1, val2)
-        elif op in {"||", "&&", "!", "==", "<>", ">", "<", ">=", "<="}:  # Operações lógicas e relacionais
+        elif op in {"||", "&&", "!", "==", "<>", ">", "<", ">=", "<="}:  
             val1 = self.resolve_operand(operando1)
             val2 = self.resolve_operand(operando2) if operando2 else None
             self.memory[guardar] = self.perform_logical_operation(op, val1, val2)
-        elif op == "CALL":  # Chamadas de funções
+        elif op == "CALL":  
             self.handle_call(guardar, operando1, operando2)
-        elif op == "IF":  # Controle condicional
+        elif op == "IF":  
             cond = self.resolve_operand(guardar)
-            self.instruction_pointer = self.labels[operando1] if cond else self.labels[operando2]
-        elif op == "JUMP":  # Saltos incondicionais
-            self.instruction_pointer = self.labels[guardar]
-        elif op == "LABEL":  # Apenas um marcador, não faz nada
+            if cond:
+                if operando1 in self.labels:
+                    self.instruction_pointer = self.labels[operando1]
+            else:
+                if operando2 is not None and operando2 in self.labels:
+                    self.instruction_pointer = self.labels[operando2]
+        elif op == "JUMP":  
+            if guardar in self.labels:
+                self.instruction_pointer = self.labels[guardar]
+        elif op == "LABEL":  
             pass
         else:
             raise ValueError(f"Operação desconhecida: {op}")
@@ -79,51 +79,47 @@ class Interpreter:
             result = val1 % val2
         elif op == "//":
             result = val1 // val2
-        elif op == "+" and val2 is None:  # Operação unária de adição
+        elif op == "+" and val2 is None:  
             result = +val1
-        elif op == "-" and val2 is None:  # Operação unária de subtração
+        elif op == "-" and val2 is None: 
             result = -val1
         else:
             raise ValueError(f"Operação aritmética desconhecida: {op}")
         
-        # Log do resultado da operação
-        self.log_result(op, result)
         return result
 
     def perform_logical_operation(self, op, val1, val2):
         """Executa operações lógicas e relacionais."""
-        if op == "||":  # OU lógico
+        if op == "||":  
             result = val1 or val2
-        elif op == "&&":  # E lógico
+        elif op == "&&":  
             result = val1 and val2
-        elif op == "!":  # NÃO lógico
+        elif op == "!":  
             result = not val1
-        elif op == "==":  # Igualdade
+        elif op == "==":  
             result = val1 == val2
-        elif op == "<>":  # Diferença
+        elif op == "<>":  
             result = val1 != val2
-        elif op == ">":  # Maior que
+        elif op == ">":  
             result = val1 > val2
-        elif op == "<":  # Menor que
+        elif op == "<": 
             result = val1 < val2
-        elif op == ">=":  # Maior ou igual
+        elif op == ">=":  
             result = val1 >= val2
-        elif op == "<=":  # Menor ou igual
+        elif op == "<=":  
             result = val1 <= val2
         else:
             raise ValueError(f"Operação lógica ou relacional desconhecida: {op}")
         
-        # Log do resultado da operação
-        self.log_result(op, result)
         return result
 
     def handle_call(self, func, param1, param2):
         """Manipula chamadas de funções."""
         if func == "PRINT":
-            value = self.resolve_operand(param2 or param1)
+            value = self.memory[param2] if param2 is not None else param1
             print(value, end="")
         elif func == "SCAN":
-            value = input()  # Entrada do usuário
+            value = input()  
             self.memory[param2] = int(value) if value.isdigit() else value
         elif func == "STOP":
             self.running = False
@@ -136,18 +132,9 @@ class Interpreter:
             return None
         if isinstance(operand, (int, float)):
             return operand
+        if isinstance(operand, str) and operand.isdigit():
+            return int(operand)
         elif operand in self.memory:
             return self.memory[operand]
         else:
             raise ValueError(f"Operando desconhecido: {operand}")
-
-    def log(self, op, guardar, operando1, operando2):
-        """Imprime no terminal o que a instrução está fazendo."""
-        print(f"Executando operação: {op}")
-        print(f"Guardar em: {guardar}")
-        print(f"Operando 1: {operando1}")
-        print(f"Operando 2: {operando2 if operando2 else 'N/A'}")
-
-    def log_result(self, op, result):
-        """Imprime o resultado da operação."""
-        print(f"Resultado da operação '{op}': {result}")

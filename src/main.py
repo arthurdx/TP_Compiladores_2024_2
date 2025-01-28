@@ -21,7 +21,7 @@ def main():
     # except SyntaxError as e:
     #     print(f"Erro sintático: {e}")
 
-    interpreter = Interpreter("../txt/exCodIntermediario.txt")
+    interpreter = Interpreter("txt/exCodIntermediario.txt")
     interpreter.execute()
     
 if __name__ == '__main__':

@@ -1,0 +1,10 @@
+('=', 'num1', 0, None),                
+('=', 'num2', 0, None),                
+('CALL', 'PRINT', 'Entre com o primeiro inteiro: ', None), 
+('CALL', 'SCAN', None, 'num1'),        
+('CALL', 'PRINT', 'Entre com o segundo inteiro: ', None),  
+('CALL', 'SCAN', None, 'num2'),        
+('+', '__temp0', 'num1', 'num2'),      
+('CALL', 'PRINT', 'A soma eh: ', None), 
+('CALL', 'PRINT', None, '__temp0'),    
+('CALL', 'STOP', None, None)           
