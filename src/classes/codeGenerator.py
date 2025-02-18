@@ -19,4 +19,16 @@ class CodeGenerator:
         temp = f"__temp{self.temp_memory}"
         self.temp_memory += 1
         return temp
+    
+    def new_variable(self, name, type):
+        """Adiciona uma nova variável à tabela de variáveis"""
+        if name in self.variable_table:
+            raise ValueError(f"Variável {name} já foi declarada.")
+        self.variable_table[name] = {"type": type, "address": len(self.variable_table)}
+
+    def get_code(self):
+        """Retorna o código intermediário gerado"""
+        return self.code
+    
+    
         

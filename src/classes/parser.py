@@ -1,10 +1,12 @@
 from utils import *
+from classes.codeGenerator import CodeGenerator
 
 class Parser():
     def __init__(self, token_list):
         self.token_list = token_list
         self.pos = 0
         self.current_token = None
+        self.code_generator = cg()
 
     def set_current_token(self):
         """Define o token atual."""
