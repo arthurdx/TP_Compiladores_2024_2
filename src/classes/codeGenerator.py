@@ -1,34 +1,30 @@
 class CodeGenerator:
     def __init__(self):
         self.code = []
-        self.label_memory = 0
-        self.temp_memory = 0
+        self.label_count = 0
+        self.temp_count = 0
         self.variable_table = {}
-    
-    def emit(self, op, *operands):
-        """Adiciona instrução ao código intermediário"""
-        self.code.append((op,) + operands)
-
-    def create_label(self):
-        """Cria um label único"""
-        label = f"__label{self.label_memory}"
-        self.label_memory += 1
-    
-    def create_temp(self):
-        """Gera uma variavel temporaria para calculos intermediarios"""
-        temp = f"__temp{self.temp_memory}"
-        self.temp_memory += 1
-        return temp
-    
-    def new_variable(self, name, type):
-        """Adiciona uma nova variável à tabela de variáveis"""
-        if name in self.variable_table:
-            raise ValueError(f"Variável {name} já foi declarada.")
-        self.variable_table[name] = {"type": type, "address": len(self.variable_table)}
-
-    def get_code(self):
-        """Retorna o código intermediário gerado"""
-        return self.code
-    
-    
         
+    def emit(self, op, arg1=None, arg2=None, result=None):
+        self.code.append((op, arg1, arg2, result))
+    
+    def new_label(self):
+        self.label_count += 1
+        return f"L{self.label_count}"
+    
+    def new_temp(self):
+        self.temp_count += 1
+        return f"t{self.temp_count}"
+    
+    def add_variable(self, name, var_type):
+        if name in self.variable_table:
+            raise ValueError(f"Variável {name} já declarada")
+        default_value = 0 if var_type == 'int' else 0.0 if var_type == 'float' else ''
+        self.variable_table[name] = {'type': var_type, 'address': len(self.variable_table)}
+        self.emit('=', name, default_value, None)  # Emitir inicialização
+    
+    def get_code(self):
+        return self.code
+
+    def emit_label(self, label):
+        self.code.append(('LABEL', label, None, None))
