@@ -56,6 +56,7 @@ class Parser:
                 f"na linha '{self.current_token[2] if self.current_token else None}' e "
                 f"na coluna '{self.current_token[3] if self.current_token else None}'. Esperado: fim do arquivo."
             )
+        self.code_generator.emit("CALL", "STOP", None, None)
 
     def parse_type(self):
         """<type> -> 'int' | 'float' | 'string'"""
@@ -273,9 +274,9 @@ class Parser:
             self.consume(token_map["IDEN"])
         elif self.current_token[0] in [token_map["INT"], token_map["FLT"], token_map["OCT"], token_map["HEX"]]:
             print(f"Valor numérico: {self.current_token[1]}")
-            value = self.current_token[1]
+            value = int(self.current_token[1])
             self.consume(self.current_token[0])
-            temp = self.code_generator.new_temp(var_name)
+            temp = self.code_generator.new_temp()
             self.code_generator.emit("=", temp, value, None)
         elif self.current_token[0] == token_map["("]["LPAR"]:
             self.consume(token_map["("]["LPAR"])

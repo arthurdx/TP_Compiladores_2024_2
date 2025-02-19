@@ -1,8 +1,5 @@
 int main() {
     int numBloco,divBloco,restoBloco;
-    numBloco = 0;
-    divBloco = 0;
-    restoBloco = 0;
 
     system.out.print("Entre com o inteiro: ");
     system.in.scan(int, numBloco);

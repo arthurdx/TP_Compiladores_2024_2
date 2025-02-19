@@ -13,7 +13,7 @@ def main():
     filename = sys.argv[1]
     tokens = read_java_file(filename)
     print("Tokens gerados:", tokens)
-    
+   
     try:
         parser = Parser(tokens)
         parser.parse_function()

@@ -137,7 +137,7 @@ class Interpreter:
         """Resolve o valor de um operando."""
         if operand is None:
             return None
-        if isinstance(operand, (int, float)):
+        if isinstance(operand, (int, float, str)) and operand not in self.memory:
             return operand
         elif operand in self.memory:
             return self.memory[operand]

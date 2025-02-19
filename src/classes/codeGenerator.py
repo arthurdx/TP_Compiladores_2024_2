@@ -12,9 +12,7 @@ class CodeGenerator:
         self.label_count += 1
         return f"__label{self.label_count}"
     
-    def new_temp(self, var_name=None):
-        if var_name:
-            return f"{var_name}_0"
+    def new_temp(self):
         self.temp_count += 1
         return f"__temp{self.temp_count}"
     
