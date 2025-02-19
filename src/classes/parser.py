@@ -1,12 +1,13 @@
 from utils import *
 from classes.codeGenerator import CodeGenerator
+from classes.ast import *
 
 class Parser():
     def __init__(self, token_list):
         self.token_list = token_list
         self.pos = 0
         self.current_token = None
-        self.code_generator = cg()
+        self.code_generator = CodeGenerator()
 
     def set_current_token(self):
         """Define o token atual."""
@@ -44,16 +45,18 @@ class Parser():
     def parse_function(self):
         """<function*> -> <type> 'IDENT' '(' ')' <bloco>'"""
         self.set_current_token()
-        self.parse_type()
+        return_type = self.parse_type()
+        func_name = self.current_token[1]
         self.consume(token_map['IDEN'])
         self.consume(token_map['(']['LPAR'])
         self.consume(token_map[')']['RPAR'])
-        self.parse_bloco()
+        body = self.parse_bloco()
         if self.pos < len(self.token_list):
             raise SyntaxError(f"Token inesperado '{self.current_token[1] if self.current_token else None}', "
                               f"na linha '{self.current_token[2] if self.current_token else None}' e "
                               f"na coluna '{self.current_token[3] if self.current_token else None}'. Esperado: fim do arquivo.")
-
+        return FunctionNode(return_type, func_name, [], body)
+    
     def parse_type(self):
         """<type> -> 'int' | 'float' | 'string'"""
         if self.current_token[0] == token_map['int']['KINT']:
@@ -142,7 +145,9 @@ class Parser():
          | 'IDENT' '/=' <expr> 
          | 'IDENT' '%=' <expr>;
         """
+        ident = self.current_token[1]
         self.consume(token_map['IDEN'])
+        op = self.current_token[1]
         if self.current_token[0] == token_map['=']['ASSG']:
             self.consume(token_map['=']['ASSG'])
         if self.current_token[0] == token_map['+=']['INC']:
@@ -155,8 +160,9 @@ class Parser():
             self.consume(token_map['/=']['ASDV'])
         if self.current_token[0] == token_map['%=']['ASMD']:
             self.consume(token_map['%=']['ASMD'])
-        self.parse_expr()
-
+        expr_node = self.parse_expr()
+        return AssignmentNode(ident, op, expr_node)
+    
     def parse_optExpr(self):
         """<optExpr> -> <expr> | & """
         if self.current_token[0] != token_map[';']['SMCL']:
@@ -230,20 +236,19 @@ class Parser():
 
     def parse_add(self):
         """<add> -> <mult> <restoAdd> ;"""
-        self.parse_mult()
-        self.parse_resto_add()
+        left_side = self.parse_mult()
+        return self.parse_resto_add(left_side)
 
-    def parse_resto_add(self):
+    def parse_resto_add(self, left_side):
         """<restoAdd> -> '+' <mult> <restoAdd> 
             | '-' <mult> <restoAdd> | & ;""" 
-        if self.current_token[0] == token_map['+']['ADD']:
-            self.consume(token_map['+']['ADD'])
-            self.parse_mult() 
-            self.parse_resto_add()
-        elif self.current_token[0] == token_map['-']['SUB']:
-            self.consume(token_map['-']['SUB'])
-            self.parse_mult()  
-            self.parse_resto_add()
+        if self.current_token[0] in [token_map['+']['ADD'], token_map['-']['SUB']]:
+            op = self.current_token[1]
+            self.consume(self.current_token[0])
+            right_side = self.parse_mult()
+            new_left_side = BinaryOpNode(left_side, op, right_side)
+            return self.parse_resto_add(new_left_side)
+        return left_side
 
     def parse_mult(self):
         """<mult> -> <uno> <restoMult> ;"""

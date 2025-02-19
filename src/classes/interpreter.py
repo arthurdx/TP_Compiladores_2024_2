@@ -1,7 +1,7 @@
 NEW_LINE = '\n'
 
 class Interpreter:
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, code=None):
         self.memory = {}
         self.labels = {}
         self.instruction_pointer = 0
@@ -17,6 +17,10 @@ class Interpreter:
                         self.instructions.append(instruction)
                     else:
                         raise ValueError(f"Instrução inválida: {line.strip(', {NEW_LINE}')}")
+        elif code:
+            self.instructions = code
+        else:
+            raise ValueError("Deve ser fornecido um arquivo ou código intermediário proveniente do gerador.")
 
     def execute(self):
         """Executa uma lista de instruções do código intermediário."""

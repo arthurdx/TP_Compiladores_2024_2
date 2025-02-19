@@ -1,0 +1,27 @@
+int main() {
+    int numBloco,divBloco,restoBloco;
+
+    system.out.print("Entre com o inteiro: ");
+    system.in.scan(int, numBloco);
+    system.out.print(numBloco);
+    system.out.print(" = ");
+
+   //__label0:
+    while (numBloco > 1) {
+        divBloco = 2;
+
+        //__label3:
+        while (numBloco % divBloco != 0) {
+            divBloco = divBloco + 1;
+        }
+
+        system.out.print(divBloco);
+        numBloco = numBloco / divBloco;
+
+        if (numBloco > 1) {
+            system.out.print(" * ");
+        }
+    }
+
+    system.out.print("\n");
+}
