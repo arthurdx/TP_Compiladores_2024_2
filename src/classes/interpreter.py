@@ -1,14 +1,15 @@
 NEW_LINE = '\n'
 
 class Interpreter:
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, code=None):
         self.memory = {}
         self.labels = {}
         self.instruction_pointer = 0
-        self.instructions = []
         self.running = True
 
-        if filename:
+        if code:
+            self.instructions = code
+        elif filename:
             with open(filename, 'r') as file:
                 lines = file.readlines()
                 for line in lines:
@@ -17,6 +18,8 @@ class Interpreter:
                         self.instructions.append(instruction)
                     else:
                         raise ValueError(f"Instrução inválida: {line.strip(', {NEW_LINE}')}")
+        else:
+            raise ValueError("Nenhum código fornecido para execução")
 
     def execute(self):
         """Executa uma lista de instruções do código intermediário."""

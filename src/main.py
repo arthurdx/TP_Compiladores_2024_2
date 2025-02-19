@@ -18,7 +18,9 @@ def main():
         parser = Parser(tokens)
         parser.parse_function()
         print("Código sintaticamente correto")
-        print(parser.code_generator.get_code())
+        print("Código intermediário gerado:", parser.code_generator.get_code())
+        interpreter = Interpreter(code=parser.code_generator.get_code())
+        interpreter.execute()
     except SyntaxError as e:
         print(f"Erro sintático: {e}")
 

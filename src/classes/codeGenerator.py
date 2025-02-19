@@ -10,11 +10,13 @@ class CodeGenerator:
     
     def new_label(self):
         self.label_count += 1
-        return f"L{self.label_count}"
+        return f"__label{self.label_count}"
     
-    def new_temp(self):
+    def new_temp(self, var_name=None):
+        if var_name:
+            return f"{var_name}_0"
         self.temp_count += 1
-        return f"t{self.temp_count}"
+        return f"__temp{self.temp_count}"
     
     def add_variable(self, name, var_type):
         if name in self.variable_table:

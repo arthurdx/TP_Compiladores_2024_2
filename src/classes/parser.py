@@ -61,10 +61,13 @@ class Parser:
         """<type> -> 'int' | 'float' | 'string'"""
         if self.current_token[0] == token_map["int"]["KINT"]:
             self.consume(token_map["int"]["KINT"])
+            return "int"
         elif self.current_token[0] == token_map["float"]["KFLT"]:
             self.consume(token_map["float"]["KFLT"])
+            return "float"
         elif self.current_token[0] == token_map["string"]["KSTR"]:
             self.consume(token_map["string"]["KSTR"])
+            return "string"
 
     def parse_bloco(self):
         """<bloco> -> '{' <stmList> '}'"""
@@ -268,11 +271,11 @@ class Parser:
         if self.current_token[0] == token_map["IDEN"]:
             var_name = self.current_token[1]
             self.consume(token_map["IDEN"])
-            # Emit code to load variable if needed
-        elif self.current_token[0] in [token_map["INT"], token_map["FLT"]]:
+        elif self.current_token[0] in [token_map["INT"], token_map["FLT"], token_map["OCT"], token_map["HEX"]]:
+            print(f"Valor numérico: {self.current_token[1]}")
             value = self.current_token[1]
             self.consume(self.current_token[0])
-            temp = self.code_generator.new_temp()
+            temp = self.code_generator.new_temp(var_name)
             self.code_generator.emit("=", temp, value, None)
         elif self.current_token[0] == token_map["("]["LPAR"]:
             self.consume(token_map["("]["LPAR"])

@@ -1,2 +1,2 @@
 # TP_Compiladores_2024_2
-análisador lexico para uma simplificação da linguagem java. (Java--).
+interpretador de código para uma simplificação fictícia da linguagem Java. (Java--) .jmm.
