@@ -39,7 +39,7 @@ class Parser():
                 f"Esperado: {expected_name}, "
                 f"Na Linha: {self.current_token[2] if self.current_token else None} e na Coluna: {self.current_token[3] if self.current_token else None}."
             )
-        print(f"Token consumido: {self.current_token[1]}")
+        # print(f"Token consumido: {self.current_token[1]}")
         self.next_position()
 
     def parse_function(self):
@@ -59,26 +59,32 @@ class Parser():
     
     def parse_type(self):
         """<type> -> 'int' | 'float' | 'string'"""
-        if self.current_token[0] == token_map['int']['KINT']:
+        f_type = self.current_token[0]
+        if f_type == token_map['int']['KINT']:
             self.consume(token_map['int']['KINT'])
-        elif self.current_token[0] == token_map['float']['KFLT']:
+        elif f_type == token_map['float']['KFLT']:
             self.consume(token_map['float']['KFLT'])
-        elif self.current_token[0] == token_map['string']['KSTR']:    
+        elif f_type == token_map['string']['KSTR']:    
             self.consume(token_map['string']['KSTR'])
+        return f_type
         
 
     
     def parse_bloco(self):
         """<bloco> -> '{' <stmList> '}'"""
         self.consume(token_map['{']['LBRC'])
-        self.parse_stmList()
+        stmts = self.parse_stmList()
         self.consume(token_map['}']['RBRC'])
+        return BlockNode(stmts)
 
     def parse_stmList(self):
         """<stmList> -> <stm> <stmList> | &"""
+        stmts = []
         if self.current_token and self.current_token[0] != token_map['}']['RBRC']:
-            self.parse_stmt()
-            self.parse_stmList()
+            stmt = self.parse_stmt()
+            stmts.append(stmt)
+            stmts += self.parse_stmList()
+        return stmts
 
     def parse_stmt(self):
         """
@@ -94,47 +100,58 @@ class Parser():
             | ';' ;
         """
         if self.current_token[0] == token_map['for']['FOR']:
-            self.parse_forStmt()
+            return self.parse_forStmt()
         elif self.current_token[0] == token_map['system']['SYS']:
-            self.parse_ioStmt()
+            return self.parse_ioStmt()
         elif self.current_token[0] == token_map['while']['WHL']:
-            self.parse_whileStmt()
+            return self.parse_whileStmt()
         elif self.current_token[0] == token_map['IDEN']:
-            self.parse_atrib()
+            node = self.parse_atrib()
             self.consume(token_map[';']['SMCL'])
+            return node
         elif self.current_token[0] == token_map['if']['IF']:
-            self.parse_ifStmt()
+            return self.parse_ifStmt()
         elif self.current_token[0] == token_map['{']['LBRC']:
-            self.parse_bloco()
+            return self.parse_bloco()
         elif self.current_token[0] == token_map['break']['BRK']:
             self.consume(token_map['break']['BRK'])
+            node = ASTNode()
+            node.break_stmt = True
+            return node
         elif self.current_token[0] == token_map['continue']['CTN']:
             self.consume(token_map['continue']['CTN'])
+            node = ASTNode()
+            node.continue_stmt = True
+            return node
         elif self.current_token[0] in [token_map['int']['KINT'], token_map['float']['KFLT'], token_map['string']['KSTR']]:
-            self.parse_declaration()            
+            return self.parse_declaration()  
         elif self.current_token[0] == token_map[';']['SMCL']:
             self.consume(token_map[';']['SMCL'])
+            return None
         elif self.current_token[0] == token_map['}']['RBRC']:
             self.consume(token_map['}']['RBRC'])
-        
+            return None
         
 
     def parse_forStmt(self):
         """<forStmt> -> 'for' '(' <optAtrib> ';' <optExpr> ';' <optAtrib> ')' <stmt> ;r"""
         self.consume(token_map['for']['FOR'])
         self.consume(token_map['(']['LPAR'])
-        self.parse_optAtrib()
+        init = self.parse_optAtrib()
         self.consume(token_map[';']['SMCL'])
-        self.parse_optExpr()
+        condition = self.parse_optExpr()
         self.consume(token_map[';']['SMCL'])
-        self.parse_optAtrib()
+        update = self.parse_optAtrib()
         self.consume(token_map[')']['RPAR'])
-        self.parse_stmt()
+        body = self.parse_stmt()
+        return ForNode(init, condition, update, body)
+    
 
     def parse_optAtrib(self):
         """<optAtrib> -> <atrib> | & ;"""
         if self.current_token[0] == token_map['IDEN']:
-            self.parse_atrib()
+            return self.parse_atrib()
+        return None
 
     def parse_atrib(self):
         """
@@ -167,72 +184,73 @@ class Parser():
         """<optExpr> -> <expr> | & """
         if self.current_token[0] != token_map[';']['SMCL']:
             self.parse_expr()
+        return None
                     
 
     def parse_expr(self):
         "<expr> -> <or> ;"
-        self.parse_or()
+        return self.parse_or()
 
     def parse_or(self):
         """<or> -> <and> <restoOr> ;"""
-        self.parse_and()
-        self.parse_resto_or()
+        left_side = self.parse_and()
+        return self.parse_resto_or(left_side)
 
-    def parse_resto_or(self):
+    def parse_resto_or(self, left_side):
         """<restoOr> -> '||' <and> <restoOr> | & ;"""
         if self.current_token[0] == token_map['||']['OR']:
+            op = self.current_token[1]
             self.consume(token_map['||']['OR'])
-            self.parse_and()    
-            self.parse_resto_or()    
+            right_side =  self.parse_and()
+            new_left_side = BinaryOpNode(left_side, op, right_side)
+            return self.parse_resto_or(new_left_side)
+        return left_side   
 
     def parse_and(self):
         """<and> -> <not> <restoAnd> ;"""
-        self.parse_not()
-        self.parse_resto_and()
+        left_side = self.parse_not()
+        return self.parse_resto_and(left_side)
 
-    def parse_resto_and(self):
+    def parse_resto_and(self, left_side):
         """<restoAnd> -> '&&' <not> <restoAnd> | & ;"""
         if self.current_token[0] == token_map['&&']['AND']:
+            op = self.current_token[1]
             self.consume(token_map['&&']['AND'])
-            self.parse_not()    
-            self.parse_resto_and()
+            right_side = self.parse_not()    
+            new_left_side = BinaryOpNode(left_side, op, right_side)
+            return self.parse_resto_and(new_left_side)
+        return left_side
 
     def parse_not(self):
         """<not> -> '!' <not> | <rel> ;"""
         if self.current_token[0] == token_map['!']['NOT']:
+            op = self.current_token[1]
             self.consume(token_map['!']['NOT'])
-            self.parse_not()  
+            right_side = self.parse_not()  
+            return BinaryOpNode(LiteralNode("!", "operator"), op, right_side)
         else:  
-            self.parse_rel()
+            return self.parse_rel()
         
     def parse_rel(self):
         """<rel> -> <add> <restoRel> ;"""
-        self.parse_add()
-        self.parse_resto_rel()
+        left = self.parse_add()
+        self.parse_resto_rel(left)
 
-    def parse_resto_rel(self):
-        """<restoRel> -> '==' <add> | '!=' <add>
-            | '<' <add> | '<=' <add> 
-            | '>' <add> | '>=' <add> | & ;
+    def parse_resto_rel(self, left_side):
         """
-        if self.current_token[0] == token_map['==']['EQL']:
-            self.consume(token_map['==']['EQL'])
-            self.parse_add()
-        elif self.current_token[0] == token_map['!=']['DIF']:
-            self.consume(token_map['!=']['DIF'])
-            self.parse_add()
-        elif self.current_token[0] == token_map['>']['GT']:
-            self.consume(token_map['>']['GT'])
-            self.parse_add()
-        elif self.current_token[0] == token_map['>=']['GET']:
-            self.consume(token_map['>=']['GET'])
-            self.parse_add()
-        elif self.current_token[0] == token_map['<']['LT']:
-            self.consume(token_map['<']['LT'])
-            self.parse_add()
-        elif self.current_token[0] == token_map['<=']['LET']:
-            self.consume(token_map['<=']['LET'])
-            self.parse_add()
+        <restoRel> -> '==' <add> | '!=' <add>
+                   | '<' <add> | '<=' <add> 
+                   | '>' <add> | '>=' <add> | ε 
+        """
+        if self.current_token[0] in [token_map['==']['EQL'], token_map['!=']['DIF'], 
+                                     token_map['>']['GT'], token_map['>=']['GET'], 
+                                     token_map['<']['LT'], token_map['<=']['LET']]:
+            op = self.current_token[1]
+            self.consume(self.current_token[0])
+            right_side = self.parse_add()
+            new_left = BinaryOpNode(left_side, op, right_side)
+            return self.parse_resto_rel(new_left)
+        return left_side
 
     def parse_add(self):
         """<add> -> <mult> <restoAdd> ;"""
@@ -252,37 +270,37 @@ class Parser():
 
     def parse_mult(self):
         """<mult> -> <uno> <restoMult> ;"""
-        self.parse_uno()
-        self.parse_resto_mult()
+        left_side = self.parse_uno()
+        return self.parse_resto_mult(left_side)
 
     def parse_uno(self):
         """<uno> -> '+' <uno> | '-' <uno> | <fator> ;"""
         if self.current_token[0] == token_map['+']['ADD']:
+            op = self.current_token[1]
             self.consume(token_map['+']['ADD'])
-            self.parse_uno() 
+            right_side = self.parse_uno() 
+            return BinaryOpNode(LiteralNode("+", "operator"), op, right_side)
         elif self.current_token[0] == token_map['-']['SUB']:
+            op = self.current_token[1]
             self.consume(token_map['-']['SUB'])
-            self.parse_uno()
+            right_side = self.parse_uno()
+            return BinaryOpNode(LiteralNode("-", "operator"), op, right_side)
         else:
-            self.parse_fator()
+            return self.parse_fator()
 
-    def parse_resto_mult(self):
-        """<restoMult> -> '*' <uno> <restoMult>
-            |  '/' <uno> <restoMult> 
-            |  '%' <uno> <restoMult> | & ;
+    def parse_resto_mult(self, left_side):
         """
-        if self.current_token[0] == token_map['*']['MULT']:
-            self.consume(token_map['*']['MULT'])
-            self.parse_uno()
-            self.parse_resto_mult()
-        elif self.current_token[0] == token_map['/']['DIV']:
-            self.consume(token_map['/']['DIV'])
-            self.parse_uno()
-            self.parse_resto_mult()
-        elif self.current_token[0] == token_map['%']['MOD']:
-            self.consume(token_map['%']['MOD'])
-            self.parse_uno()
-            self.parse_resto_mult()
+        <restoMult> -> '*' <uno> <restoMult>
+                    | '/' <uno> <restoMult> 
+                    | '%' <uno> <restoMult> | ε
+        """
+        if self.current_token[0] in [token_map['*']['MULT'], token_map['/']['DIV'], token_map['%']['MOD']]:
+            op = self.current_token[1]
+            self.consume(self.current_token[0])
+            right_side = self.parse_uno()
+            new_left = BinaryOpNode(left_side, op, right_side)
+            return self.parse_resto_mult(new_left)
+        return left_side
 
     def parse_ioStmt(self):
         """<ioStmt> -> 'system' '.' 'in' '.' 'scan'  '(' <type> ',' 'IDENT' ')' ';' 
@@ -294,110 +312,164 @@ class Parser():
             self.consume(token_map['.']['PNT'])
             self.consume(token_map['scan']['SCAN'])
             self.consume(token_map['(']['LPAR'])
-            self.parse_type()
+            type_node = self.parse_type()
             self.consume(token_map[',']['CLN'])
+            ident = self.current_token[1]
             self.consume(token_map['IDEN'])
+            node = IoNode("in", type_node, ident)
             self.consume(token_map[')']['RPAR'])
             self.consume(token_map[';']['SMCL'])
+            return node
         if self.current_token[0] == token_map['out']['OUT']:
             self.consume(token_map['out']['OUT'])
             self.consume(token_map['.']['PNT'])
             self.consume(token_map['print']['PRT'])
             self.consume(token_map['(']['LPAR'])
-            self.parse_outList()
+            out_list = self.parse_outList()
             self.consume(token_map[')']['RPAR'])
             self.consume(token_map[';']['SMCL'])
+            node = IoNode("out", out_list)
+            return node
             
     def parse_outList(self):
         """<outList> -> <out> <restoOutList> ;"""
-        self.parse_out()
-        self.parse_restoOutList()
+        out_item = self.parse_out()
+        rest = self.parse_restoOutList()
+        if rest is None:
+            return out_item
+        return [out_item] + rest
     
     def parse_out(self):
-        """<out> -> 'STR' | 'IDENT' | 'NUMdec' | 'NUMfloat' | 'NUMoct' | 'NUMhex'"""
+        """
+        <out> -> 'STR' | 'IDENT' | 'NUMdec' | 'NUMfloat' | 'NUMoct' | 'NUMhex'
+        """
         if self.current_token[0] == token_map['STR']:
+            value = self.current_token[1]
             self.consume(token_map['STR'])
-        if self.current_token[0] == token_map['IDEN']:
+            return LiteralNode(value, 'string')
+        elif self.current_token[0] == token_map['IDEN']:
+            name = self.current_token[1]
             self.consume(token_map['IDEN'])
-        if self.current_token[0] == token_map['INT']:
+            return VariableNode(name)
+        elif self.current_token[0] == token_map['INT']:
+            value = self.current_token[1]
             self.consume(token_map['INT'])
-        if self.current_token[0] == token_map['FLT']:
+            return LiteralNode(value, 'int')
+        elif self.current_token[0] == token_map['FLT']:
+            value = self.current_token[1]
             self.consume(token_map['FLT'])
-        if self.current_token[0] == token_map['OCT']:
+            return LiteralNode(value, 'float')
+        elif self.current_token[0] == token_map['OCT']:
+            value = self.current_token[1]
             self.consume(token_map['OCT'])
-        if self.current_token[0] == token_map['HEX']:
+            return LiteralNode(value, 'oct')
+        elif self.current_token[0] == token_map['HEX']:
+            value = self.current_token[1]
             self.consume(token_map['HEX'])
-        
+            return LiteralNode(value, 'hex')
+        else:
+            raise SyntaxError("Expressão de saída inválida.")
+
     def parse_restoOutList(self):
-        """<restoOutList> -> ',' <out> <restoOutList> | & ;"""
+        """<restoOutList> -> ',' <out> <restoOutList> | ε"""
         if self.current_token[0] == token_map[',']['CLN']:
             self.consume(token_map[',']['CLN'])
-            self.parse_out()
-            self .parse_restoOutList()
+            out_item = self.parse_out()
+            rest = self.parse_restoOutList()
+            if rest is None:
+                return [out_item]
+            return [out_item] + rest
+        return None
             
             
     def parse_whileStmt(self):
         """<whileStmt> -> 'while' '(' <expr> ')' <stmt> ;"""
         self.consume(token_map['while']['WHL'])
         self.consume(token_map['(']['LPAR'])
-        self.parse_expr()
+        condition = self.parse_expr()
         self.consume(token_map[')']['RPAR'])
-        self.parse_stmt()
+        body = self.parse_stmt()
+        return WhileNode(condition, body)
 
 
     def parse_ifStmt(self):
         """<ifStmt> -> 'if' '(' <expr> ')' <stmt> <elsePart> ;"""
         self.consume(token_map['if']['IF'])
         self.consume(token_map['(']['LPAR'])
-        self.parse_expr()
+        condition = self.parse_expr()
         self.consume(token_map[')']['RPAR'])
-        self.parse_stmt()
-        self.parse_elsePart()
+        then_stmt = self.parse_stmt()
+        else_stmt = self.parse_elsePart()
+        node = IfNode(condition, then_stmt, else_stmt)
+        return node
         
     def parse_elsePart(self):
         """<elsePart> -> 'else' <stmt> | & ;"""
         if self.current_token[0] == token_map['else']['ELSE']:
             self.consume(token_map['else']['ELSE'])
-            parse_stmt()
+            return self.parse_stmt()
+        return None
         
     def parse_fator(self):
-        """<fator> -> 'NUMint' | 'NUMfloat' | 'NUMoct' | 'NUMhex'
-         | 'IDENT'  | '(' <expr> ')' | 'STR'"""
-
+        """
+        <fator> -> 'NUMint' | 'NUMfloat' | 'NUMoct' | 'NUMhex'
+                | 'IDENT'  | '(' <expr> ')' | 'STR'
+        """
         if self.current_token[0] == token_map['INT']:
+            value = self.current_token[1]
             self.consume(token_map['INT'])
+            return LiteralNode(value, 'int')
         elif self.current_token[0] == token_map['FLT']:
+            value = self.current_token[1]
             self.consume(token_map['FLT'])
-        elif self.current_token[0] == token_map['OCT']:    
+            return LiteralNode(value, 'float')
+        elif self.current_token[0] == token_map['OCT']:
+            value = self.current_token[1]
             self.consume(token_map['OCT'])
+            return LiteralNode(value, 'oct')
         elif self.current_token[0] == token_map['HEX']:
+            value = self.current_token[1]
             self.consume(token_map['HEX'])
+            return LiteralNode(value, 'hex')
         elif self.current_token[0] == token_map['IDEN']:
+            name = self.current_token[1]
             self.consume(token_map['IDEN'])
+            return VariableNode(name)
         elif self.current_token[0] == token_map['(']['LPAR']:
             self.consume(token_map['(']['LPAR'])
-            self.parse_expr()
+            expr = self.parse_expr()
             self.consume(token_map[')']['RPAR'])
+            return expr
         elif self.current_token[0] == token_map['STR']:
+            value = self.current_token[1]
             self.consume(token_map['STR'])
+            return LiteralNode(value, 'string')
 
-    
     def parse_declaration(self):
         """<declaration> -> <type> <identList> ';'"""
-        self.parse_type()
-        self.parse_identList()
+        variable_type = self.parse_type()
+        ident_list = self.parse_identList()
         self.consume(token_map[';']['SMCL'])
+        node = declarationNode(variable_type, ident_list)
+        return node
 
     def parse_identList(self):
         """<identList> -> 'IDENT' <restoIdentList>"""
+        ident = self.current_token[1]
         self.consume(token_map['IDEN'])
-        self.parse_restoIdentList()
+        rest = self.parse_restoIdentList()
+        if rest is None:
+            return [VariableNode(ident)]
+        return [VariableNode(ident)] + rest
 
     def parse_restoIdentList(self):
-        """<restoIdentList> -> ',' 'IDENT' <restoIdentList> | & ;"""
+        """<restoIdentList> -> ',' 'IDENT' <restoIdentList> | ε"""
         if self.current_token[0] == token_map[',']['CLN']:
             self.consume(token_map[',']['CLN'])
+            ident = self.current_token[1]
             self.consume(token_map['IDEN'])
-            self.parse_restoIdentList()
-    
-    
+            rest = self.parse_restoIdentList()
+            if rest is None:
+                return [VariableNode(ident)]
+            return [VariableNode(ident)] + rest
+        return None

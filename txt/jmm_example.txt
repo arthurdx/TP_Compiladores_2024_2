@@ -1,0 +1,12 @@
+int main(){
+    int i, j;
+    system.out.print("Entre com um inteiro: ");
+    system.in.scan(int, i);
+    system.out.print("Entre com outro inteiro: ");
+    system.in.scan(int, j);
+    while(i < j){
+        i += 1;
+        system.out.print(i);
+    }
+    system.out.print("finalizado");
+}

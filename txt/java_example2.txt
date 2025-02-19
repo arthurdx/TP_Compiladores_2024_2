@@ -1,9 +1,12 @@
 // comentario
  main(){
-    system.out.print("\tcavalo");
+    system.out.print("\tcavalo\n");
     // comenteei
-    float a = 4.2;
-    int b = 03;
-    int c = a + b;
+    float a;
+    a = 4;
+    int b;
+    b = 03;
+    int c;
+    c = a + b;
     system.out.print("resultado: int", c);
 }
